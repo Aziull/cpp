@@ -7,17 +7,19 @@
 using namespace std;
 
 unordered_map<string, string> tokenTable = {
-    {"program", "keyword"}, {"end", "keyword"},
+    {"def", "keyword"},{"return", "keyword"},
     {"if", "keyword"}, {"else", "keyword"}, 
-    {"for", "keyword"}, {":=", "assign_op"}, 
+    {"for", "keyword"}, {"=", "assign_op"}, 
     {".", "dot"}, {" ", "ws"}, {"\t", "ws"},
     {"\n", "nl"}, {"-", "add_op"}, {"+", "add_op"},
     {"*", "mult_op"}, {"/", "mult_op"},
     {"(", "par_op"}, {")", "par_op"},
+    {"{", "cur_par_op"}, {"}", "cur_par_op"},
     {"^", "exp_op"}, {"!", "not_op"}, 
     {"<", "less_op"}, {">", "more_op"},
-    {"!=", "not_eql_op"}, {"<=", "less_than_op"},
-     {">=", "more_than_op"}};
+    {"!=", "not_eql_op"}, {"<=", "less_than_op"}, {"!=", "not_op"},
+    {"==", "eql_op"}, {">=", "more_than_op"},
+    {"true", "bool"}, {"false", "bool"}};
 
 // Решта токенів, визначених за заключним станом
 unordered_map<int, string> tokStateTable = {
@@ -46,22 +48,23 @@ struct KeyEqual
 
 // δ - функція переходу станів
 unordered_map<StateSymbolPair, int, KeyHash, KeyEqual> stf = {
-    {{0, 'L'}, 1}, {{1, 'L'}, 1}, {{1, 'D'}, 1},
+    {{0, 'L'}, 1}, {{1, 'L'}, 1}, {{1, 'D'}, 1}, {{1, '_'}, 1},
     {{1, 'o'}, 2}, {{0, 'D'}, 4}, {{4, 'D'}, 4},
     {{4, 'd'}, 5}, {{4, 'o'}, 9}, {{5, 'D'}, 5},
-    {{5, 'o'}, 6}, {{0, ':'}, 11}, {{11, '='}, 12},
-    {{11, 'o'}, 102}, {{0, 'w'}, 0}, {{0, 'n'}, 13},
-    {{0, '+'}, 14}, {{0, '-'}, 14}, {{0, '*'}, 14}, 
-    {{0, '/'}, 14}, {{0, '('}, 14}, {{0, ')'}, 14}, 
-    {{0, 'o'}, 101}};
+    {{5, 'o'}, 6}, {{0, '='}, 11}, {{0, '+'}, 11}, {{0, '-'}, 11},
+     {{0, '*'}, 11}, {{0, '/'}, 11}, {{0, '>'}, 11}, {{0, '<'}, 11},
+    {{0, '!'}, 12}, {{11, '='}, 12},
+    {{11, 'o'}, 15}, {{0, 'w'}, 0}, {{0, 'n'}, 13},
+    {{0, '('}, 14}, {{0, ')'}, 14}, {{0, '{'}, 14}, 
+    {{0, '}'}, 14}, {{0, 'o'}, 101}};
 
 // Ініціалізація стартового стану
 int initState = 0;
 
 // Визначення заключних станів
-set<int> F = {2, 6, 9, 10, 12, 13, 14, 101, 102};
-set<int> Fstar = {2, 6, 9};   // Заключні стани, що використовуються у зірочці
-set<int> Ferror = {101, 102}; // Стани для обробки помилок
+set<int> F = {2, 6, 9, 10, 12, 13, 14, 101, 15};
+set<int> Fstar = {2, 6, 9, 15};   // Заключні стани, що використовуються у зірочці
+set<int> Ferror = {101}; // Стани для обробки помилок
 
 // Таблиця ідентифікаторів
 unordered_map<string, int> tableOfId;
@@ -92,7 +95,7 @@ void fail()
 {
     if (state == 101)
     {
-        cout << "Lexer: у рядку " << numLine << " неочікуваний символ " << int(currentChar) << endl;
+        cout << "Lexer: у рядку " << numLine << " неочікуваний символ " << currentChar << endl;
         exit(101);
     }
     if (state == 102)
@@ -148,7 +151,7 @@ string classOfChar(char ch)
     {
         return "n";
     }
-    else if (string("+-:=*/()").find(ch) != string::npos)
+    else if (string("+-=*/(){}><!_").find(ch) != string::npos)
     {
         return string(1, ch); // повертає рядок, що містить один символ ch
     }
@@ -214,10 +217,10 @@ void processing()
         state = initState;
     }
 
-    if (state == 2 || state == 6 || state == 9)
+    if (state == 2 || state == 6 || state == 9 || state == 15)
     { // keyword, ident, float, int
         string token = getToken(state, lexeme);
-        if (token != "keyword")
+        if (token != "keyword" && token !="bool")
         { // не keyword
             int index = indexIdConst(state, lexeme);
             cout << numLine << "\t" << lexeme << "\t" << token << "\t" << index << endl;

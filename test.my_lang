@@ -1,8 +1,6 @@
-program
- v1:= 9+ 4
-f := 12.3
-v1 := 12.3
-
-end 
-
-
+def a = 14.4
+def b = 12 +24
+def c = 43.43
+if(true){
+   return 0 
+}
