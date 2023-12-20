@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include <iostream>
+#include <tuple>
 #include <unordered_map>
 #include <set>
 #include <string>
@@ -19,8 +20,8 @@ public:
     void PrintResults() const;                   // Функція для виведення результатів
 
 private:
-    std::unordered_map<string, pair<string, int>> tableOfConst;
-    std::unordered_map<int, tuple<int, string, string, int>> tableOfSymb;
+    std::unordered_map<string, pair<string, int> > tableOfConst;
+    std::unordered_map<int, std::tuple<int, std::string, std::string, int> > tableOfSymb;
     std::unordered_map<string, int> tableOfId;
     std::unordered_map<StateSymbolPair, int, KeyHash, KeyEqual> stf;
 

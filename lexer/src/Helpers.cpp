@@ -1,4 +1,4 @@
-#include "headers/Helpers.h"
+#include <Lexer/Helpers.h>
 // Реалізація функції для порівняння ключів
 size_t KeyHash::operator()(const StateSymbolPair &k) const
 {
