@@ -1,10 +1,9 @@
-project(Lexer LANGUAGES CXX)
+project(Common LANGUAGES CXX)
 
-set(INCLUDE_PREFIX "include/Lexer")
+set(INCLUDE_PREFIX "include/Common")
 set(HEADERS
-    ${INCLUDE_PREFIX}/Helpers.h 
-    ${INCLUDE_PREFIX}/Lexer.h 
-    ${INCLUDE_PREFIX}/TokenTables.h
+    ${INCLUDE_PREFIX}/Common.h
+    ${INCLUDE_PREFIX}/Types.h
 )
 
 set(INCLUDE_TARGET ${PROJECT_NAME}.Include)
@@ -17,12 +16,10 @@ target_include_directories(${INCLUDE_TARGET}
 
 set(SOURCE_PREFIX "src")
 set(SOURCES
-    ${SOURCE_PREFIX}/Helpers.cpp 
-    ${SOURCE_PREFIX}/Lexer.cpp 
-    ${SOURCE_PREFIX}/TokenTables.cpp
+    ${SOURCE_PREFIX}/Common.cpp 
 )
 
 set(STATIC_TARGET ${PROJECT_NAME}.Static)
 add_library(${STATIC_TARGET} STATIC ${SOURCES})
 
-target_link_libraries(${STATIC_TARGET} PUBLIC ${INCLUDE_TARGET} PRIVATE Common.Static)
+target_link_libraries(${STATIC_TARGET} PUBLIC ${INCLUDE_TARGET})

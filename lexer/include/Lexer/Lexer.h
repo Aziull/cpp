@@ -7,6 +7,7 @@
 #include <set>
 #include <string>
 #include "TokenTables.h" // Включення файлу з таблицями токенів
+#include <Common/Types.h>
 #include "Helpers.h"     // Включення допоміжних структур та функцій
 
 using namespace std;
@@ -15,14 +16,16 @@ class Lexer
 {
 public:
     string sourceCode;
+
+    TableOfSymbols getTableOfSymbols() const;
     Lexer();                                     // Конструктор
     void Analyze(const std::string &sourceCode); // Функція аналізу коду
     void PrintResults() const;                   // Функція для виведення результатів
 
 private:
-    std::unordered_map<string, pair<string, int> > tableOfConst;
-    std::unordered_map<int, std::tuple<int, std::string, std::string, int> > tableOfSymb;
-    std::unordered_map<string, int> tableOfId;
+    TableOfConstants tableOfConst;
+    TableOfSymbols tableOfSymb;
+    TableOfId tableOfId;
     std::unordered_map<StateSymbolPair, int, KeyHash, KeyEqual> stf;
 
     int initState = 0;
@@ -31,8 +34,9 @@ private:
     int numLine;
     int numChar = -1;
     char currentChar;
-    string lexeme;
+    std::string lexeme;
     bool FSuccess;
+    std::size_t nextSymbolIndex = 0;
 
     // Допоміжні приватні методи
     void fail();

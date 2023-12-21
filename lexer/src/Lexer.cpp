@@ -1,5 +1,11 @@
 #include <Lexer/Lexer.h>
 using namespace std;
+
+TableOfSymbols Lexer::getTableOfSymbols() const
+{
+    return tableOfSymb;
+}
+
 Lexer::Lexer()
 {
     // Ініціалізація початкового стану та інших змінних
@@ -13,7 +19,34 @@ Lexer::Lexer()
 
     // δ - функція переходу станів
     this->stf = {
-        {{0, 'L'}, 1}, {{1, 'L'}, 1}, {{1, 'D'}, 1}, {{1, '_'}, 1}, {{1, 'o'}, 2}, {{0, 'D'}, 4}, {{4, 'D'}, 4}, {{4, 'd'}, 5}, {{4, 'o'}, 9}, {{5, 'D'}, 5}, {{5, 'o'}, 6}, {{0, '='}, 11}, {{0, '+'}, 11}, {{0, '-'}, 11}, {{0, '*'}, 11}, {{0, '/'}, 11}, {{0, '>'}, 11}, {{0, '<'}, 11}, {{0, '!'}, 12}, {{11, '='}, 12}, {{11, 'o'}, 15}, {{0, 'w'}, 0}, {{0, 'n'}, 13}, {{0, '('}, 14}, {{0, ')'}, 14}, {{0, '{'}, 14}, {{0, '}'}, 14}, {{0, 'o'}, 101}};
+        {{0, 'L'}, 1},
+        {{1, 'L'}, 1},
+        {{1, 'D'}, 1},
+        {{1, '_'}, 1},
+        {{1, 'o'}, 2},
+        {{0, 'D'}, 4},
+        {{4, 'D'}, 4},
+        {{4, 'd'}, 5},
+        {{4, 'o'}, 9},
+        {{5, 'D'}, 5},
+        {{5, 'o'}, 6},
+        {{0, '='}, 11},
+        {{0, '+'}, 11},
+        {{0, '-'}, 11},
+        {{0, '*'}, 11},
+        {{0, '/'}, 11},
+        {{0, '>'}, 11},
+        {{0, '<'}, 11},
+        {{0, '!'}, 12},
+        {{11, '='}, 12},
+        {{11, 'o'}, 15},
+        {{0, 'w'}, 0},
+        {{0, 'n'}, 13},
+        {{0, '('}, 14},
+        {{0, ')'}, 14},
+        {{0, '{'}, 14},
+        {{0, '}'}, 14},
+        {{0, 'o'}, 101}};
 }
 
 void Lexer::Analyze(const std::string &sourceCode)
@@ -202,12 +235,14 @@ void Lexer::processing()
         { // не keyword
             int index = indexIdConst(state, lexeme);
             cout << numLine << "\t" << lexeme << "\t" << token << "\t" << index << endl;
-            tableOfSymb[numLine] = make_tuple(numLine, lexeme, token, index);
+            tableOfSymb[nextSymbolIndex] = make_tuple(numLine, lexeme, token, index);
+            ++nextSymbolIndex;
         }
         else
         { // якщо keyword
             cout << numLine << "\t" << lexeme << "\t" << token << endl;
-            tableOfSymb[numLine] = make_tuple(numLine, lexeme, token, 0);
+            tableOfSymb[nextSymbolIndex] = make_tuple(numLine, lexeme, token, 0);
+            ++nextSymbolIndex;
         }
         lexeme = "";
         numChar = putCharBack(numChar); // зірочка
@@ -219,7 +254,8 @@ void Lexer::processing()
         lexeme += currentChar;
         string token = getToken(state, lexeme);
         cout << numLine << "\t" << lexeme << "\t" << token << endl;
-        tableOfSymb[numLine] = make_tuple(numLine, lexeme, token, 0);
+        tableOfSymb[nextSymbolIndex] = make_tuple(numLine, lexeme, token, 0);
+        ++nextSymbolIndex;
         lexeme = "";
         state = initState;
     }

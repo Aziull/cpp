@@ -4,13 +4,14 @@
 #include <set>
 #include <fstream>
 #include <Lexer/Lexer.h>
+#include <Parser/Parser.h>
 #include <string>
 using namespace std;
 
 int main()
 {
     string sourceCode = "";
-    ifstream f("test.my_lang");
+    ifstream f("TestData/test.my_lang");
     if (f)
     {
         string line;
@@ -18,11 +19,15 @@ int main()
         {
             sourceCode += line + "\n";
         }
+
         f.close();
     }
     Lexer lexer;
     lexer.Analyze(sourceCode);
 
-    lexer.PrintResults();
+    // lexer.PrintResults();
+
+    Parser parser(lexer.getTableOfSymbols());
+    parser.parse();
     return 0;
 }

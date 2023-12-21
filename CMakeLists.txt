@@ -5,3 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(lexer)
 add_subdirectory(lab2)
+add_subdirectory(parser)
+add_subdirectory(common)
+add_subdirectory(lab3)
