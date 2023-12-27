@@ -22,11 +22,11 @@ int main()
 
         f.close();
     }
+
     Lexer lexer;
     lexer.Analyze(sourceCode);
 
     // lexer.PrintResults();
-
     Parser parser(lexer.getTableOfSymbols());
     parser.parse();
     return 0;

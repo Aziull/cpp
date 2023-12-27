@@ -23,6 +23,8 @@ private:
     bool parseExpression(const std::string &logMessageAlignment);
     bool parseTerm(const std::string &logMessageAlignment);
     bool parseFactor(const std::string &logMessageAlignment);
+    bool parsePrintln(const std::string &logMessageAlignment);
+    bool isNextToken(const Token &token, const Lexeme &lexeme = "");
 
 private:
     TableOfSymbols _tableOfSymbols;

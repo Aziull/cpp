@@ -6,6 +6,7 @@ using namespace std;
 unordered_map<string, string> tokenTable = {
     {"def", "keyword"},
     {"return", "keyword"},
+    {"println", "keyword"},
     {"if", "keyword"},
     {"else", "keyword"},
     {"for", "keyword"},

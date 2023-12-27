@@ -9,13 +9,12 @@ void throwIfError(const ErrorType type, const std::string expected = "", int lin
     case ErrorType::UnknownInstruction:
     {
         throw std::runtime_error("Невідповідність інструкцій: очікувано " + expected +
-                                 ", але отримано " + lexer + " " + token + "у рядку " +
+                                 ", але отримано " + lexer + " " + token + " у рядку " +
                                  std::to_string(lineNum));
     }
     case ErrorType::UnpredictibleFileFinish:
     {
-        throw std::runtime_error("Неочікуваний кінець програми: " + lexer + " " + token + " у рядку " +
-                                 std::to_string(lineNum));
+        throw std::runtime_error("Неочікуваний кінець програми: " + expected);
     }
     case ErrorType::UndefinedVariable:
     {
@@ -61,19 +60,18 @@ bool Parser::parseStatement(const std::string &logMessageAlignment)
     // Statement = VarDeclaration | Assignment | PrintStatement | IfStatement | ForStatement .
     std::cout << logMessageAlignment
               << "parse statement " << std::endl;
-    const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
-    std::cout << "\t\t" << std::to_string(lineNumber) << " " << lexeme << " " << token << std::endl;
-    if (token == "keyword")
+    if (isNextToken("keyword"))
     {
         return parseKeyword(logMessageAlignment + "\t");
     }
-    else if (token == "ident")
+    else if (isNextToken("ident"))
     {
         return parseIdent(logMessageAlignment + "\t");
     }
     else
     {
-        throwIfError(ErrorType::UnknownInstruction, "Keyword or ident", lineNumber, lexeme, token);
+        std::cout << logMessageAlignment << "No statement because no keyword or ident" << std::endl;
+        return false;
     }
 
     return false;
@@ -89,46 +87,57 @@ bool Parser::parseIdent(const std::string &logMessageAlignment)
         ++_rowNumber;
         return parseAssign(logMessageAlignment + "\t");
     }
-    return false;
+    return true;
+}
+
+bool Parser::isNextToken(const Token &token, const Lexeme &lexeme)
+{
+    const auto &[lineNumber, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
+    return (tok == token) && (lexeme.empty() ? true : lex == lexeme);
 }
 
 bool Parser::parseToken(const Lexeme &lexeme, const Token &token, const std::string &logMessageAlignment)
 {
-    const auto &[lineNumber, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
-    ++_rowNumber;
     if (_rowNumber >= _tableOfSymbols.size())
     {
-        throwIfError(ErrorType::UnpredictibleFileFinish, "Unpredictible end of file at line", lineNumber);
+        throwIfError(ErrorType::UnpredictibleFileFinish, "Очікувався символ " + lexeme + " " + token);
     }
+    const auto &[lineNumber, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
+    ++_rowNumber;
     std::cout << logMessageAlignment
-              << "paser token " << lexeme << " " << token << std::endl;
+              << "parse token: очікується " << lexeme << " " << token << std::endl;
     if (lexeme == lex && token == tok)
     {
         std::cout << logMessageAlignment
-                  << "В рядку " << std::to_string(lineNumber) << " символ " << lex << " " << tok << std::endl;
+                  << "рядок " << std::to_string(lineNumber) << ": знайдено символ " << lex << " " << tok << std::endl;
         return true;
     }
-    throwIfError(ErrorType::UnknownInstruction, "Expexted token " + token + " and lexeme " + lexeme, lineNumber, lex, tok);
+    throwIfError(ErrorType::UnknownInstruction, " token " + token + " and lexeme " + lexeme, lineNumber, lex, tok);
     return true;
 }
 
 bool Parser::parseKeyword(const std::string &logMessageAlignment)
 {
-    const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
-    if (token == "keyword" && lexeme == "def")
+
+    if (isNextToken("keyword", "def"))
     {
         return parseDef(logMessageAlignment);
     }
-    else if (token == "keyword" && lexeme == "if")
+    else if (isNextToken("keyword", "if"))
     {
         return parseIf(logMessageAlignment);
     }
-    else if (token == "keyword" && lexeme == "for")
+    else if (isNextToken("keyword", "for"))
     {
         return parseFor(logMessageAlignment);
     }
+    else if (isNextToken("keyword", "println"))
+    {
+        return parsePrintln(logMessageAlignment);
+    }
     else
     {
+        const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
         throwIfError(ErrorType::UnknownInstruction, "Expected keyword def, if or for", lineNumber, lexeme, token);
     }
     return false;
@@ -143,7 +152,14 @@ bool Parser::parseIf(const std::string &logMessageAlignment)
     parseBoolExpression(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
     parseToken("{", "cur_par_op", logMessageAlignment + "\t");
-    parseStatementList(logMessageAlignment + "\t");
+    if (isNextToken("cur_par_op", "}"))
+    {
+        std::cout << logMessageAlignment << "\tstatement list empty in if block" << std::endl;
+    }
+    else
+    {
+        parseStatementList(logMessageAlignment + "\t");
+    }
     parseToken("}", "cur_par_op", logMessageAlignment + "\t");
     parseElse(logMessageAlignment + "\t");
     return true;
@@ -155,6 +171,7 @@ bool Parser::parseElse(const std::string &logMessageAlignment)
               << "parse else" << std::endl;
     if (_rowNumber >= _tableOfSymbols.size())
     {
+        std::cout << logMessageAlignment << "Блок else відсутній. Кінець файлу" << std::endl;
         return true;
     }
 
@@ -163,8 +180,20 @@ bool Parser::parseElse(const std::string &logMessageAlignment)
     {
         parseToken("else", "keyword", logMessageAlignment + "\t");
         parseToken("{", "cur_par_op", logMessageAlignment + "\t");
-        parseStatementList(logMessageAlignment + "\t");
+        if (isNextToken("cur_par_op", "}"))
+        {
+            std::cout << logMessageAlignment << "\tstatement list empty in else block" << std::endl;
+        }
+        else
+        {
+            parseStatementList(logMessageAlignment + "\t");
+        }
         parseToken("}", "cur_par_op", logMessageAlignment + "\t");
+        return true;
+    }
+    else
+    {
+        std::cout << logMessageAlignment << "no else block" << std::endl;
         return true;
     }
     return false;
@@ -175,41 +204,38 @@ bool Parser::parseFor(const std::string &logMessageAlignment)
     std::cout << logMessageAlignment
               << "parse for" << std::endl;
     const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
-    if (lexeme == "for" && token == "keyword")
+    parseToken("for", "keyword", logMessageAlignment + "\t");
+    parseToken("(", "par_op", logMessageAlignment + "\t");
+    if (isNextToken("ident"))
     {
-        parseToken("(", "par_op", logMessageAlignment + "\t");
-        const auto &[newLineNumber, newLexeme, newToken, newId] = _tableOfSymbols.at(_rowNumber);
-        if (newToken == "ident")
-        {
-            parseIdent(logMessageAlignment + "\t");
-        }
-        else if (newToken == "def")
-        {
-            parseDef(logMessageAlignment + "\t");
-        }
-        parseToken(";", "split_op", logMessageAlignment + "\t");
-        {
-            const auto &[nl, l, t, _] = _tableOfSymbols.at(_rowNumber);
-            if (t != "split_op")
-            {
-                parseBoolExpression(logMessageAlignment + "\t");
-            }
-        }
-
-        parseToken(";", "split_op", logMessageAlignment + "\t");
-        {
-            const auto &[nl, l, t, _] = _tableOfSymbols.at(_rowNumber);
-            if (t == "ident")
-            {
-                parseIdent(logMessageAlignment + "\t");
-            }
-        }
-        parseToken(")", "par_op", logMessageAlignment + "\t");
-        parseToken("{", "cur_par_op", logMessageAlignment + "\t");
-        parseStatementList(logMessageAlignment + "\t");
-        parseToken("}", "cur_par_op", logMessageAlignment + "\t");
+        parseIdent(logMessageAlignment + "\t");
     }
-    return false;
+    else if (isNextToken("keyword", "def"))
+    {
+        parseDef(logMessageAlignment + "\t");
+    }
+    parseToken(";", "split_op", logMessageAlignment + "\t");
+    if (!isNextToken("split_op"))
+    {
+        parseBoolExpression(logMessageAlignment + "\t");
+    }
+    parseToken(";", "split_op", logMessageAlignment + "\t");
+    if (isNextToken("ident"))
+    {
+        parseIdent(logMessageAlignment + "\t");
+    }
+    parseToken(")", "par_op", logMessageAlignment + "\t");
+    parseToken("{", "cur_par_op", logMessageAlignment + "\t");
+    if (isNextToken("cur_par_op", "}"))
+    {
+        std::cout << logMessageAlignment << "\tstatement list empty in for block" << std::endl;
+    }
+    else
+    {
+        parseStatementList(logMessageAlignment + "\t");
+    }
+    parseToken("}", "cur_par_op", logMessageAlignment + "\t");
+    return true;
 }
 
 bool Parser::parseDef(const std::string &logMessageAlignment)
@@ -234,7 +260,7 @@ bool Parser::parseDef(const std::string &logMessageAlignment)
 }
 bool Parser::parseBoolExpression(const std::string &logMessageAlignment)
 {
-    std::cout << logMessageAlignment << " parse bool expression" << std::endl;
+    std::cout << logMessageAlignment << "parse bool expression" << std::endl;
     parseExpression(logMessageAlignment + "\t");
     const auto &[lineNumber, lexeme, token, _] = _tableOfSymbols.at(_rowNumber);
     if (token == "not_op" || token == "less_op" || token == "more_op" || token == "not_eql_op" || token == "less_than_op" || token == "eql_op" || token == "more_than_op")
@@ -243,7 +269,7 @@ bool Parser::parseBoolExpression(const std::string &logMessageAlignment)
     }
     else
     {
-        // error
+        throwIfError(ErrorType::UnknownInstruction, "оператор порівняння", lineNumber, lexeme, token);
     }
     parseExpression(logMessageAlignment + "\t");
     return true;
@@ -257,13 +283,13 @@ bool Parser::parseAssign(const std::string &logMessageAlignment)
     {
         parseExpression(logMessageAlignment + "\t");
     }
-    return false;
+    return true;
 }
 bool Parser::parseExpression(const std::string &logMessageAlignment)
 {
     std::cout << logMessageAlignment << "Parse expression " << std::endl;
     const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
-    std::cout << logMessageAlignment << std::to_string(lineNumber) << " " << lexeme << " " << token << " " << std::to_string(id) << std::endl;
+    std::cout << logMessageAlignment << "в рядку " << std::to_string(lineNumber) << ": " << lexeme << " " << token << " " << std::to_string(id) << std::endl;
     parseTerm(logMessageAlignment + "\t");
     while (_rowNumber < _tableOfSymbols.size())
     {
@@ -305,22 +331,36 @@ bool Parser::parseTerm(const std::string &logMessageAlignment)
 
 bool Parser::parseFactor(const std::string &logMessageAlignment)
 {
+
     std::cout << logMessageAlignment << "parse factor " << std::endl;
     const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
     if (token == "int" || token == "float" || token == "ident")
     {
         ++_rowNumber;
-        std::cout << logMessageAlignment << "в рядку " << lineNumber << " - " << lexeme << " " << token << std::endl;
+        std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;
+    }
+    else if (lexeme == "-")
+    {
+        std::cout << logMessageAlignment << "в рядку " << lineNumber << ": унарний мінус" << std::endl;
     }
     else if (lexeme == "(")
     {
-        ++_rowNumber;
+        parseToken("(", "par_op", logMessageAlignment + "\t");
         parseExpression(logMessageAlignment + "\t");
         parseToken(")", "par_op", logMessageAlignment + "\t");
     }
     else
     {
-        throwIfError(ErrorType::UnpredictibleFileFinish, "Factor parsing error", lineNumber, lexeme, token);
+        throwIfError(ErrorType::UnknownInstruction, "вираз", lineNumber, lexeme, token);
     }
+    return true;
+}
+bool Parser::parsePrintln(const std::string &logMessageAlignment)
+{
+    std::cout << logMessageAlignment << "parse println " << std::endl;
+    parseToken("println", "keyword", logMessageAlignment + "\t");
+    parseToken("(", "par_op", logMessageAlignment + "\t");
+    parseExpression(logMessageAlignment + "\t");
+    parseToken(")", "par_op", logMessageAlignment + "\t");
     return true;
 }
