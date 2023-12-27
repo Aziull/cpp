@@ -9,20 +9,20 @@ public:
     void parse();
 
 private:
-    bool parseStatementList();
-    bool parseStatement();
-    bool parseIdent();
-    bool parseToken(const Lexeme &lexeme, const Token &token);
-    bool parseKeyword();
-    bool parseIf();
-    bool parseElse();
-    bool parseFor();
-    bool parseDef();
-    bool parseBoolExpression();
-    bool parseAssign();
-    bool parseExpression();
-    bool parseTerm();
-    bool parseFactor();
+    bool parseStatementList(const std::string &logMessageAlignment);
+    bool parseStatement(const std::string &logMessageAlignment);
+    bool parseIdent(const std::string &logMessageAlignment);
+    bool parseToken(const Lexeme &lexeme, const Token &token, const std::string &logMessageAlignment);
+    bool parseKeyword(const std::string &logMessageAlignment);
+    bool parseIf(const std::string &logMessageAlignment);
+    bool parseElse(const std::string &logMessageAlignment);
+    bool parseFor(const std::string &logMessageAlignment);
+    bool parseDef(const std::string &logMessageAlignment);
+    bool parseBoolExpression(const std::string &logMessageAlignment);
+    bool parseAssign(const std::string &logMessageAlignment);
+    bool parseExpression(const std::string &logMessageAlignment);
+    bool parseTerm(const std::string &logMessageAlignment);
+    bool parseFactor(const std::string &logMessageAlignment);
 
 private:
     TableOfSymbols _tableOfSymbols;

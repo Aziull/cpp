@@ -1,27 +1,5 @@
-if(1 > 2){
-    def a = 0
-}
-else{
-    def a = 4;
-}
-
-if(1 > 2){
-    
-}
-else{
-   
-}
-
-for(def i = 0; i < 5; i = i + 1){
-    i = i + 1
-}
-
-for(def i = 0; i < 5; i = i + 1){
-    
-}
-
-for(; ){
-    
-}
-
+def a = 14.4
+def b = 12 +24
+def c = 43.43
+def d = -2
 

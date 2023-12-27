@@ -13,3 +13,11 @@ using TableOfSymbols = std::unordered_map<int, std::tuple<LineNumber, Lexeme, To
 using TableOfConstants = std::unordered_map<std::string, std::pair<std::string, int>>;
 
 using TableOfId = std::unordered_map<std::string, int>;
+
+enum class ErrorType
+{
+    UnknownInstruction,
+    UnpredictibleFileFinish,
+    UndefinedVariable,
+    UninitializedVariable
+};
