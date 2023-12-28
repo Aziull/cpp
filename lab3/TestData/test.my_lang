@@ -3,6 +3,8 @@ def b = 12 +24
 def c = 43.43
 def d = -2
 def e = -   d
+def v
+a = v
 
 def f = (2 + 4)
 

@@ -19,5 +19,6 @@ enum class ErrorType
     UnknownInstruction,
     UnpredictibleFileFinish,
     UndefinedVariable,
-    UninitializedVariable
+    UninitializedVariable,
+    IdentifierAlreadyDefined
 };

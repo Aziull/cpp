@@ -24,6 +24,10 @@ void throwIfError(const ErrorType type, const std::string expected = "", int lin
     {
         throw std::runtime_error("Ідентифікатор не ініціалізовано " + lexer);
     }
+    case ErrorType::IdentifierAlreadyDefined:
+    {
+        throw std::runtime_error("Ідентифікатор вже визначено " + lexer);
+    }
     }
 }
 
@@ -84,8 +88,12 @@ bool Parser::parseIdent(const std::string &logMessageAlignment)
     const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
     if (token == "ident")
     {
+        if (_variables.count(lexeme) == 0)
+        {
+            throwIfError(ErrorType::UndefinedVariable, "", lineNumber, lexeme, token);
+        }
         ++_rowNumber;
-        return parseAssign(logMessageAlignment + "\t");
+        return parseAssign(logMessageAlignment + "\t", lexeme);
     }
     return true;
 }
@@ -240,23 +248,28 @@ bool Parser::parseFor(const std::string &logMessageAlignment)
 
 bool Parser::parseDef(const std::string &logMessageAlignment)
 {
-    std::cout << logMessageAlignment << " parse def" << std::endl;
+
+    std::cout << logMessageAlignment << "parse def" << std::endl;
     parseToken("def", "keyword", logMessageAlignment + "\t");
-    const auto &[lineNumber, lexeme, token, _] = _tableOfSymbols.at(_rowNumber);
-    if (token == "ident")
+    const auto &[lineNumber, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
+    if (isNextToken("ident"))
     {
-        ++_rowNumber;
-        if (_rowNumber >= _tableOfSymbols.size())
+        if (_variables.count(lex) == 0)
         {
-            return false;
+            _variables[lex] = false;
+            std::cout << logMessageAlignment << "оголошено ідентифікатор " << lex << std::endl;
         }
-        const auto &[newLineNumber, newLexeme, assignToken, _] = _tableOfSymbols.at(_rowNumber);
-        if (assignToken == "assign_op")
+        else
         {
-            parseAssign(logMessageAlignment + "\t");
+            throwIfError(ErrorType::IdentifierAlreadyDefined, "", lineNumber, lex, tok);
         }
+        return parseIdent(logMessageAlignment + "\t");
     }
-    return true;
+    else
+    {
+        throwIfError(ErrorType::UnknownInstruction, "ідентифікатор", lineNumber, lex, tok);
+    }
+    return false;
 }
 bool Parser::parseBoolExpression(const std::string &logMessageAlignment)
 {
@@ -275,13 +288,17 @@ bool Parser::parseBoolExpression(const std::string &logMessageAlignment)
     return true;
 }
 
-bool Parser::parseAssign(const std::string &logMessageAlignment)
+bool Parser::parseAssign(const std::string &logMessageAlignment, const std::string &identifier)
 {
     std::cout << logMessageAlignment << "parse assign" << std::endl;
     const auto &[lineNumber, lexeme, token, _] = _tableOfSymbols.at(_rowNumber);
-    if (parseToken("=", "assign_op", logMessageAlignment + "\t"))
+    if (isNextToken("assign_op", "="))
     {
+        parseToken("=", "assign_op", logMessageAlignment + "\t");
         parseExpression(logMessageAlignment + "\t");
+        _variables[identifier] = true;
+        std::cout << logMessageAlignment << "ідентифікатор " << identifier << " ініціалізовано" << std::endl;
+        return true;
     }
     return true;
 }
@@ -334,7 +351,20 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
 
     std::cout << logMessageAlignment << "parse factor " << std::endl;
     const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
-    if (token == "int" || token == "float" || token == "ident")
+    if (token == "ident")
+    {
+        if (_variables.count(lexeme) == 0)
+        {
+            throwIfError(ErrorType::UndefinedVariable, "", lineNumber, lexeme, token);
+        }
+        else if (!_variables[lexeme])
+        {
+            throwIfError(ErrorType::UninitializedVariable, "", lineNumber, lexeme, token);
+        }
+        ++_rowNumber;
+        std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;
+    }
+    else if (token == "int" || token == "float")
     {
         ++_rowNumber;
         std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;

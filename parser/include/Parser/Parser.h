@@ -19,7 +19,7 @@ private:
     bool parseFor(const std::string &logMessageAlignment);
     bool parseDef(const std::string &logMessageAlignment);
     bool parseBoolExpression(const std::string &logMessageAlignment);
-    bool parseAssign(const std::string &logMessageAlignment);
+    bool parseAssign(const std::string &logMessageAlignment, const std::string &identifier);
     bool parseExpression(const std::string &logMessageAlignment);
     bool parseTerm(const std::string &logMessageAlignment);
     bool parseFactor(const std::string &logMessageAlignment);
@@ -28,6 +28,7 @@ private:
 
 private:
     TableOfSymbols _tableOfSymbols;
+    std::unordered_map<std::string, bool> _variables;
     std::size_t _rowNumber = 0;
     std::string _error = "";
 };
