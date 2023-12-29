@@ -4,3 +4,6 @@ def c = 43.43
 if(true){
    return 0 
 }
+for(def i = 0; i < 5; i = i + 1){
+   println(i)
+}

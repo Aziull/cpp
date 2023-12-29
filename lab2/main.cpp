@@ -3,7 +3,7 @@
 #include <utility> // Для std::pair
 #include <set>
 #include <fstream>
-#include "headers/Lexer.h"
+#include <Lexer/Lexer.h>
 #include <string>
 using namespace std;
 
