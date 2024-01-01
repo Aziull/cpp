@@ -33,7 +33,8 @@ unordered_map<string, string> tokenTable = {
     {">=", "more_than_op"},
     {"true", "bool"},
     {"false", "bool"},
-    {";", "split_op"}};
+    {";", "split_op"},
+    {"-", "neg"}};
 
 // Таблиця станів токенів
 unordered_map<int, string> tokStateTable = {

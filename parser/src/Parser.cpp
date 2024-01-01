@@ -31,6 +31,18 @@ void throwIfError(const ErrorType type, const std::string expected = "", int lin
     }
 }
 
+void Parser::printTableOfSymbols() const
+{
+    std::cout << std::string(30, '-') << std::endl;
+    std::cout << "tableOfSymb:" << std::endl;
+    for (const auto &item : _tableOfSymbols)
+    {
+        std::cout << "Key:\t" << item.first << "\tValue:("
+                  << get<0>(item.second) << ", " << get<1>(item.second) << ", "
+                  << get<2>(item.second) << ", " << get<3>(item.second) << ")" << std::endl;
+    }
+}
+
 void Parser::parse()
 {
     try
@@ -38,6 +50,7 @@ void Parser::parse()
         std::cout << "Entries in symbols table: " << std::to_string(_tableOfSymbols.size()) << std::endl;
         parseStatementList("");
         std::cout << "Syntax analysis complete successfully" << std::endl;
+        printTableOfSymbols();
     }
     catch (const std::exception &ex)
     {
@@ -61,7 +74,6 @@ bool Parser::parseStatementList(const std::string &logMessageAlignment)
 
 bool Parser::parseStatement(const std::string &logMessageAlignment)
 {
-    // Statement = VarDeclaration | Assignment | PrintStatement | IfStatement | ForStatement .
     std::cout << logMessageAlignment
               << "parse statement " << std::endl;
     if (isNextToken("keyword"))
@@ -101,6 +113,7 @@ bool Parser::parseIdent(const std::string &logMessageAlignment)
 bool Parser::isNextToken(const Token &token, const Lexeme &lexeme)
 {
     const auto &[lineNumber, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
+    // std::cout << lex << " " << tok << std::endl;
     return (tok == token) && (lexeme.empty() ? true : lex == lexeme);
 }
 
@@ -348,9 +361,16 @@ bool Parser::parseTerm(const std::string &logMessageAlignment)
 
 bool Parser::parseFactor(const std::string &logMessageAlignment)
 {
-
     std::cout << logMessageAlignment << "parse factor " << std::endl;
-    const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
+    auto &[lN, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
+    if (lex == "-")
+    {
+        ++_rowNumber;
+        tok = "neg";
+        std::cout << logMessageAlignment << "в рядку " << lN << ": унарний мінус"
+                  << " token " << tok << " lexeme " << lex << std::endl;
+    }
+    auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
     if (token == "ident")
     {
         if (_variables.count(lexeme) == 0)
@@ -369,10 +389,13 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
         ++_rowNumber;
         std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;
     }
-    else if (lexeme == "-")
-    {
-        std::cout << logMessageAlignment << "в рядку " << lineNumber << ": унарний мінус" << std::endl;
-    }
+    // else if (lexeme == "-")
+    // {
+    //     ++_rowNumber;
+    //     token = "neg";
+    //     std::cout << logMessageAlignment << "в рядку " << lineNumber << ": унарний мінус"
+    //               << " token " << token << " lexeme " << lexeme << std::endl;
+    // }
     else if (lexeme == "(")
     {
         parseToken("(", "par_op", logMessageAlignment + "\t");

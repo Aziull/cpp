@@ -25,6 +25,7 @@ private:
     bool parseFactor(const std::string &logMessageAlignment);
     bool parsePrintln(const std::string &logMessageAlignment);
     bool isNextToken(const Token &token, const Lexeme &lexeme = "");
+    void printTableOfSymbols() const;
 
 private:
     TableOfSymbols _tableOfSymbols;
