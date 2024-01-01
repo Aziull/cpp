@@ -302,19 +302,22 @@ bool Parser::parseBoolExpression(const std::string &logMessageAlignment)
         throwIfError(ErrorType::UnknownInstruction, "оператор порівняння", lineNumber, lexeme, token);
     }
     parseExpression(logMessageAlignment + "\t");
+    postfixCodeGeneration(lexeme, token);
     return true;
 }
 
 bool Parser::parseAssign(const std::string &logMessageAlignment, const std::string &identifier)
 {
     std::cout << logMessageAlignment << "parse assign" << std::endl;
-    const auto &[lineNumber, lexeme, token, _] = _tableOfSymbols.at(_rowNumber);
+    const auto &[lineNumber, lexeme, token, _] = _tableOfSymbols.at(_rowNumber - 1);
     if (isNextToken("assign_op", "="))
     {
+        postfixCodeGeneration(lexeme, token, "lval");
         parseToken("=", "assign_op", logMessageAlignment + "\t");
         parseExpression(logMessageAlignment + "\t");
         _variables[identifier] = true;
         std::cout << logMessageAlignment << "ідентифікатор " << identifier << " ініціалізовано" << std::endl;
+        postfixCodeGeneration("=", "assign_op");
         return true;
     }
     return true;
@@ -332,6 +335,7 @@ bool Parser::parseExpression(const std::string &logMessageAlignment)
         {
             ++_rowNumber;
             parseTerm(logMessageAlignment + "\t");
+            postfixCodeGeneration(l, t);
         }
         else
         {
@@ -354,6 +358,7 @@ bool Parser::parseTerm(const std::string &logMessageAlignment)
             ++_rowNumber;
             std::cout << logMessageAlignment << "в рядку " << lineNumber << " - " << lexeme << " " << token << std::endl;
             parseFactor(logMessageAlignment + "\t");
+            postfixCodeGeneration(lexeme, token);
         }
         else
         {
@@ -367,10 +372,12 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
 {
     std::cout << logMessageAlignment << "parse factor " << std::endl;
     auto &[lN, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
+    bool isNeg = false;
     if (lex == "-")
     {
         ++_rowNumber;
         tok = "neg";
+        isNeg = true;
         std::cout << logMessageAlignment << "в рядку " << lN << ": унарний мінус"
                   << " token " << tok << " lexeme " << lex << std::endl;
     }
@@ -385,11 +392,13 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
         {
             throwIfError(ErrorType::UninitializedVariable, "", lineNumber, lexeme, token);
         }
+        postfixCodeGeneration(lexeme, token, "rval");
         ++_rowNumber;
         std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;
     }
     else if (token == "int" || token == "float")
     {
+        postfixCodeGeneration(lexeme, token, "const");
         ++_rowNumber;
         std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;
     }
@@ -402,6 +411,10 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
     else
     {
         throwIfError(ErrorType::UnknownInstruction, "вираз", lineNumber, lexeme, token);
+    }
+    if (isNeg)
+    {
+        postfixCodeGeneration("-", "neg");
     }
     return true;
 }
@@ -422,9 +435,26 @@ bool Parser::parseRead(const std::string &logMessageAlignment)
     parseToken("(", "par_op", logMessageAlignment + "\t");
     parseIdent(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
+    return true;
 }
 
-std::vector<std::string> Parser::getPostfixCode() const
+std::vector<std::pair<std::string, std::string>> Parser::getPostfixCode() const
 {
     return _postfixCode;
+}
+
+void Parser::postfixCodeGeneration(const std::string &lexeme, const std::string &token, const std::string &lexCase)
+{
+    if (lexCase == "lval")
+    {
+        _postfixCode.push_back({lexeme, "lval"});
+    }
+    else if (lexCase == "rval")
+    {
+        _postfixCode.push_back({lexeme, "lval"});
+    }
+    else
+    {
+        _postfixCode.push_back({lexeme, token});
+    }
 }

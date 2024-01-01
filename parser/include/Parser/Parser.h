@@ -8,7 +8,7 @@ public:
     Parser(TableOfSymbols tableOfSymbols) : _tableOfSymbols{std::move(tableOfSymbols)} {};
 
     void parse();
-    std::vector<std::string> getPostfixCode() const;
+    std::vector<std::pair<std::string, std::string>> getPostfixCode() const;
 
 private:
     bool parseStatementList(const std::string &logMessageAlignment);
@@ -30,10 +30,12 @@ private:
     void printTableOfSymbols() const;
     bool parseRead(const std::string &logMessageAlignment);
 
+    void postfixCodeGeneration(const std::string &lexeme, const std::string &token, const std::string &lexCase = "");
+
 private:
     TableOfSymbols _tableOfSymbols;
     std::unordered_map<std::string, bool> _variables;
     std::size_t _rowNumber = 0;
     std::string _error = "";
-    std::vector<std::string> _postfixCode = {};
+    std::vector<std::pair<std::string, std::string>> _postfixCode = {};
 };

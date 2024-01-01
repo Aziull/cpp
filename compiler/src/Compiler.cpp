@@ -53,7 +53,7 @@ void Compiler::savePostfixCode(const std::string &fileName)
     std::cout << "postfix code збережено в файлі " << fileName << ext << std::endl;
 }
 
-void Compiler::serv(const std::vector<std::string> &postfixCode, const std::unordered_map<std::string, int> &tableOfId)
+void Compiler::serv(const std::vector<std::pair<std::string, std::string>> &postfixCode, const std::unordered_map<std::string, int> &tableOfId)
 {
     std::cout << "Таблиця ідентифікаторів:" << std::endl;
     for (const auto &[str, i] : tableOfId)
@@ -63,6 +63,6 @@ void Compiler::serv(const std::vector<std::string> &postfixCode, const std::unor
     std::cout << "Код програми у постфіксній формі (ПОЛІЗ):" << std::endl;
     for (std::size_t i = 0; i < postfixCode.size(); ++i)
     {
-        std::cout << i << " " << postfixCode[i] << std::endl;
+        std::cout << i << " " << postfixCode[i].first << " " << postfixCode[i].second << std::endl;
     }
 }
