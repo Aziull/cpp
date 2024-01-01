@@ -265,7 +265,6 @@ bool Parser::parseFor(const std::string &logMessageAlignment)
 
 bool Parser::parseDef(const std::string &logMessageAlignment)
 {
-
     std::cout << logMessageAlignment << "parse def" << std::endl;
     parseToken("def", "keyword", logMessageAlignment + "\t");
     const auto &[lineNumber, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
@@ -425,6 +424,7 @@ bool Parser::parsePrintln(const std::string &logMessageAlignment)
     parseToken("(", "par_op", logMessageAlignment + "\t");
     parseExpression(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
+    postfixCodeGeneration("println", "out");
     return true;
 }
 
@@ -433,8 +433,11 @@ bool Parser::parseRead(const std::string &logMessageAlignment)
     std::cout << logMessageAlignment << "parse read " << std::endl;
     parseToken("read", "keyword", logMessageAlignment + "\t");
     parseToken("(", "par_op", logMessageAlignment + "\t");
+    auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
+    postfixCodeGeneration(lexeme, token, "lval");
     parseIdent(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
+    postfixCodeGeneration("read", "in");
     return true;
 }
 
