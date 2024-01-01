@@ -25,8 +25,6 @@ int main()
 
     Lexer lexer;
     lexer.Analyze(sourceCode);
-
-    // lexer.PrintResults();
     Parser parser(lexer.getTableOfSymbols());
     parser.parse();
     return 0;
