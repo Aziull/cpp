@@ -1,0 +1,26 @@
+def a = 14.4
+def b = 12 +24
+def c = 43.43
+def d = 2
+def e = d
+def v
+
+def f = -(-2 + 4)
+
+a = b
+
+if(-1 == 2){
+    a = 1
+if(-1 == 2){
+    a = 1
+}
+}
+read(a)
+
+for(def i = 0; i < 5 ; i = i + 2){
+   println(i)
+   for(def j = 0; j < i; j = j + 1){
+    a = a + i
+   }
+}
+

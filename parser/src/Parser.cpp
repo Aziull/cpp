@@ -156,6 +156,10 @@ bool Parser::parseKeyword(const std::string &logMessageAlignment)
     {
         return parsePrintln(logMessageAlignment);
     }
+    else if (isNextToken("keyword", "read"))
+    {
+        return parseRead(logMessageAlignment);
+    }
     else
     {
         const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
@@ -389,13 +393,6 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
         ++_rowNumber;
         std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;
     }
-    // else if (lexeme == "-")
-    // {
-    //     ++_rowNumber;
-    //     token = "neg";
-    //     std::cout << logMessageAlignment << "в рядку " << lineNumber << ": унарний мінус"
-    //               << " token " << token << " lexeme " << lexeme << std::endl;
-    // }
     else if (lexeme == "(")
     {
         parseToken("(", "par_op", logMessageAlignment + "\t");
@@ -416,4 +413,18 @@ bool Parser::parsePrintln(const std::string &logMessageAlignment)
     parseExpression(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
     return true;
+}
+
+bool Parser::parseRead(const std::string &logMessageAlignment)
+{
+    std::cout << logMessageAlignment << "parse read " << std::endl;
+    parseToken("read", "keyword", logMessageAlignment + "\t");
+    parseToken("(", "par_op", logMessageAlignment + "\t");
+    parseIdent(logMessageAlignment + "\t");
+    parseToken(")", "par_op", logMessageAlignment + "\t");
+}
+
+std::vector<std::string> Parser::getPostfixCode() const
+{
+    return _postfixCode;
 }

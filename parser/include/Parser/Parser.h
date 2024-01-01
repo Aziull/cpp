@@ -1,5 +1,6 @@
 #pragma once
 #include <Common/Types.h>
+#include <vector>
 
 class Parser
 {
@@ -7,6 +8,7 @@ public:
     Parser(TableOfSymbols tableOfSymbols) : _tableOfSymbols{std::move(tableOfSymbols)} {};
 
     void parse();
+    std::vector<std::string> getPostfixCode() const;
 
 private:
     bool parseStatementList(const std::string &logMessageAlignment);
@@ -26,10 +28,12 @@ private:
     bool parsePrintln(const std::string &logMessageAlignment);
     bool isNextToken(const Token &token, const Lexeme &lexeme = "");
     void printTableOfSymbols() const;
+    bool parseRead(const std::string &logMessageAlignment);
 
 private:
     TableOfSymbols _tableOfSymbols;
     std::unordered_map<std::string, bool> _variables;
     std::size_t _rowNumber = 0;
     std::string _error = "";
+    std::vector<std::string> _postfixCode = {};
 };

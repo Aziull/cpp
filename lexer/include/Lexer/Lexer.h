@@ -18,6 +18,9 @@ public:
     string sourceCode;
 
     TableOfSymbols getTableOfSymbols() const;
+    TableOfConstants getTableOfConstants() const;
+    TableOfId getTableOfId() const;
+
     Lexer();                                     // Конструктор
     void Analyze(const std::string &sourceCode); // Функція аналізу коду
     void PrintResults() const;                   // Функція для виведення результатів

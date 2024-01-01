@@ -279,3 +279,12 @@ void Lexer::fail()
         exit(102);
     }
 }
+
+TableOfConstants Lexer::getTableOfConstants() const
+{
+    return tableOfConst;
+}
+TableOfId Lexer::getTableOfId() const
+{
+    return tableOfId;
+}

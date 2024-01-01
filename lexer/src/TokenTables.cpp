@@ -7,6 +7,7 @@ unordered_map<string, string> tokenTable = {
     {"def", "keyword"},
     {"return", "keyword"},
     {"println", "keyword"},
+    {"read", "keyword"},
     {"if", "keyword"},
     {"else", "keyword"},
     {"for", "keyword"},
