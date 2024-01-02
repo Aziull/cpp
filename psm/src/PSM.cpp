@@ -1,5 +1,6 @@
 #include <PSM/PSM.h>
 #include <fstream>
+#include <set>
 #include <sstream>
 
 namespace
@@ -32,12 +33,10 @@ namespace
     }
 
     std::unordered_map<Section, std::string> sectionHeaders{{Section::Variables, ".vars("}, {Section::Labels, ".labels("}, {Section::Constants, ".constants("}, {Section::Code, ".code("}};
-}
 
-// PSM::PSM(/*table of lables*/ const std::unordered_map<std::string, int> &tableOfId, const std::vector<std::pair<std::string, std::string>> &postfixCode)
-//     : _postfixCode{postfixCode}, _tableOfId{tableOfId}, _instructionsCount{postfixCode.size()}, _currentInstructionIndex{0}, _stack{}
-// {
-// }
+    std::set<std::string> valueTokens = {"int", "float", "l-val", "r-val", "label"};
+    std::set<std::string> jumpTokens = {"jump", "jf", "colon"};
+}
 
 std::vector<std::string> PSM::readPostfixFileContent(const std::string &fileName)
 {
@@ -272,11 +271,100 @@ void PSM::printState() const
     }
 }
 
+void PSM::printStack() const
+{
+    if (_stack.empty())
+    {
+        std::cout << "Stack is empty" << std::endl;
+    }
+    else
+    {
+        std::cout << "Stack content \n";
+        std::stack<std::pair<std::string, std::string>> tempStack = _stack;
+
+        // Iterate over the temporary stack and print its content
+        while (!tempStack.empty())
+        {
+            std::cout << tempStack.top().first << " " << tempStack.top().second << std::endl;
+            tempStack.pop();
+        }
+    }
+}
+
+void PSM::doJump(const std::string &lex, const std::string &tok)
+{
+    const auto old = _currentInstructionIndex;
+    std::cout << "doJump" << std::endl;
+    if (tok == "jump")
+    {
+        const auto &[lexLbl, _] = _stack.top();
+        _stack.pop();
+        _currentInstructionIndex = std::stoi(_tableOfLabels.at(lexLbl));
+    }
+    else if (tok == "colon")
+    {
+        _stack.pop();
+        ++_currentInstructionIndex;
+    }
+    else if (tok == "jf")
+    {
+        const auto &[lexLbl, tokLbl] = _stack.top();
+        _stack.pop();
+        const auto &[valBool, _] = _stack.top();
+        _stack.pop();
+        if (valBool == "false")
+        {
+            _currentInstructionIndex = std::stoi(_tableOfLabels.at(lexLbl));
+        }
+        else
+        {
+            ++_currentInstructionIndex;
+        }
+    }
+    std::cout << "jump from " << std::to_string(old) << " to " << std::to_string(_currentInstructionIndex) << std::endl;
+}
+
+void PSM::doIt(const std::string &lex, const std::string &tok)
+{
+    std::cout << "do " << lex << " " << tok << std::endl;
+}
+
 void PSM::postfixExec()
 {
     std::cout << "postfixExec:" << std::endl;
+    _currentInstructionIndex = 0;
+    _instructionsCount = _postfixCode.size();
+    std::cout << _currentInstructionIndex << " " << _instructionsCount << std::endl;
     while (_currentInstructionIndex < _instructionsCount)
     {
+        printStack();
+        const auto &[lex, tok] = _postfixCode.at(_currentInstructionIndex);
+        std::cout << lex << " " << tok << std::endl;
+        if (valueTokens.count(tok) != 0)
+        {
+            _stack.push({lex, tok});
+            ++_currentInstructionIndex;
+        }
+        else if (jumpTokens.count(tok) != 0)
+        {
+            doJump(lex, tok);
+        }
+        else if (tok == "out_op")
+        {
+            std::cout << "process out" << std::endl;
+            ++_currentInstructionIndex;
+        }
+        else if (tok == "in_op")
+        {
+            std::cout << "process in" << std::endl;
+            ++_currentInstructionIndex;
+        }
+        else
+        {
+            doIt(lex, tok);
+            ++_currentInstructionIndex;
+        }
+
         // print stack
         // push to stack int','float','l-val','r-val','label','bool'
         // process jumps

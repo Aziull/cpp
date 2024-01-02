@@ -450,11 +450,11 @@ void Parser::postfixCodeGeneration(const std::string &lexeme, const std::string 
 {
     if (lexCase == "lval")
     {
-        _postfixCode.push_back({lexeme, "lval"});
+        _postfixCode.push_back({lexeme, "l-val"});
     }
     else if (lexCase == "rval")
     {
-        _postfixCode.push_back({lexeme, "lval"});
+        _postfixCode.push_back({lexeme, "r-val"});
     }
     else
     {

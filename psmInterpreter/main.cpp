@@ -7,6 +7,8 @@ int main()
         PSM psm;
         psm.loadPostfixFile("TestData/test.postfix");
         psm.printState();
+        psm.postfixExec();
+        psm.printState();
     }
     catch (const std::runtime_error &err)
     {

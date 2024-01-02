@@ -36,6 +36,9 @@ private:
     std::size_t parseConstansItem(const std::vector<std::string> &postfixFileContent, std::size_t currentIndex);
     std::size_t parseSectionItem(const std::vector<std::string> &postfixFileContent, std::size_t currentIndex, Section section);
     std::size_t parseSection(const std::vector<std::string> &postfixFileContent, std::size_t currentIndex, Section section);
+    void printStack() const;
+    void doJump(const std::string &lex, const std::string &tok);
+    void doIt(const std::string &lex, const std::string &tok);
 
     std::vector<std::pair<std::string, std::string>> _postfixCode;
     using Value = std::variant<std::monostate, int, float>;
