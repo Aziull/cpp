@@ -17,7 +17,7 @@ void Compiler::compileToPostfix(const std::string &fileName)
     std::cout << "compileToPostfix: Serve" << std::endl;
     serv(parser.getPostfixCode(), lexer.getTableOfId());
     std::cout << "compileToPostfix: Save postfix code" << std::endl;
-    savePostfixCode(fileName);
+    savePostfixCode(fileName, parser.getPostfixCode());
 }
 
 std::string Compiler::readSourceCode(const std::string &fileName)
@@ -37,13 +37,20 @@ std::string Compiler::readSourceCode(const std::string &fileName)
     return sourceCode;
 }
 
-void Compiler::savePostfixCode(const std::string &fileName)
+void Compiler::savePostfixCode(const std::string &fileName, const std::vector<std::pair<std::string, std::string>> &postfixCode)
 {
     const std::string ext = ".postfix";
     std::ofstream f(fileName + ext);
     if (f)
     {
         f << ".target: Postfix Machine\n.version: 0.2\n";
+
+        f << "\n.code(\n";
+        for (const auto &line : postfixCode)
+        {
+            f << "\t" << line.first << "\t" << line.second << "\n";
+        }
+        f << ")\n";
         f.close();
     }
     else
