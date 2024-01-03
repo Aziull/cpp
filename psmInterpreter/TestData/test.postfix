@@ -4,12 +4,14 @@
 .vars(
    a     int        
    b     int        
-   c     float      
+   c     float  
+   d     int 
+   e     float    
 )
 
 .labels(
-   m1    24 
-   m2    33 
+   m1    28 
+   m2    37 
 )
 
 .constants(
@@ -24,6 +26,10 @@
 )
 
 .code(
+   d     l-val
+IN       in_op
+e l-val 
+IN in_op
    a     l-val 
    1     int   
    :=    assign_op

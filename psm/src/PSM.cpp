@@ -2,6 +2,7 @@
 #include <fstream>
 #include <set>
 #include <sstream>
+#include <cmath>
 
 namespace
 {
@@ -32,10 +33,43 @@ namespace
         return words;
     }
 
+    std::pair<std::variant<int, float>, std::string> parseNumber(const std::string &str)
+    {
+        try
+        {
+            size_t pos = 0;
+            if (str.find_first_not_of("0123456789") == std::string::npos)
+            {
+                // Try parsing as an integer
+                return {std::stoi(str), "int"};
+            }
+            else
+            {
+                // Try parsing as a float
+                size_t floatPos = 0;
+                float floatVal = std::stof(str, &floatPos);
+                if (floatPos == str.length())
+                {
+                    return {floatVal, "float"};
+                }
+            }
+        }
+        catch (const std::exception &)
+        {
+            // Exception occurred, return indicating failure
+            throw std::runtime_error("Invalid input");
+        }
+
+        throw std::runtime_error("Invalid input");
+    }
+
     std::unordered_map<Section, std::string> sectionHeaders{{Section::Variables, ".vars("}, {Section::Labels, ".labels("}, {Section::Constants, ".constants("}, {Section::Code, ".code("}};
 
     std::set<std::string> valueTokens = {"int", "float", "l-val", "r-val", "label"};
     std::set<std::string> jumpTokens = {"jump", "jf", "colon"};
+
+    std::set<std::string> arithmeticOperatorTokens = {"add_op", "mult_op", "exp_op"};
+    std::set<std::string> boolOperatorTokens = {"less_op", "more_op", "not_eql_op", "less_than_op", "eql_op", "more_than_op"};
 }
 
 std::vector<std::string> PSM::readPostfixFileContent(const std::string &fileName)
@@ -264,10 +298,10 @@ void PSM::printState() const
         std::cout << std::endl;
     }
     std::cout << "Code" << std::endl;
-    for (const auto &[l, t] : _postfixCode)
+    for (std::size_t i = 0; i < _postfixCode.size(); ++i)
     {
-        std::cout << "\t" << l << " "
-                  << t << std::endl;
+        std::cout << "\t" << i << " "
+                  << _postfixCode[i].first << " " << _postfixCode[i].second << std::endl;
     }
 }
 
@@ -324,9 +358,329 @@ void PSM::doJump(const std::string &lex, const std::string &tok)
     std::cout << "jump from " << std::to_string(old) << " to " << std::to_string(_currentInstructionIndex) << std::endl;
 }
 
+void PSM::doNot()
+{
+    auto [lex, tok] = _stack.top();
+    _stack.pop();
+    if (tok == "bool")
+    {
+        if (lex == "true")
+        {
+            _stack.push({"false", "bool"});
+        }
+        else
+        {
+            _stack.push({"true", "bool"});
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Bool expected for ! operator");
+    }
+}
+
+void PSM::doNeg()
+{
+    std::string newL, newT;
+    auto [lex, tok] = _stack.top();
+    _stack.pop();
+    if (tok == "r-val")
+    {
+        auto [_, type, value] = _tableOfId[lex];
+        newT = type;
+        if (type == "int")
+        {
+            newL = std::to_string(std::get<int>(value) * (-1));
+        }
+        else if (type == "float")
+        {
+            newL = std::to_string(std::get<float>(value) * (-1));
+        }
+    }
+    else if (tok == "int")
+    {
+        newT = tok;
+        newL = std::to_string(std::stoi(lex) * (-1));
+    }
+    else if (tok == "float")
+    {
+        newT = tok;
+        newL = std::to_string(std::stof(lex) * (-1));
+    }
+    else
+    {
+        throw std::runtime_error("Unpredictable right token in neg operation: " + tok);
+    }
+    _stack.push({newL, newT});
+}
+
+std::pair<std::variant<int, float>, std::string> PSM::getValueAndType(const std::string &lex, const std::string &tok)
+{
+    if (tok == "int")
+    {
+        return {std::stoi(lex), "int"};
+    }
+    else if (tok == "float")
+    {
+        return {std::stof(lex), "float"};
+    }
+    else if (tok == "r-val")
+    {
+        auto [_, type, value] = _tableOfId[lex];
+        if (std::holds_alternative<std::monostate>(value))
+        {
+            throw std::runtime_error("Undefined value of operand " + lex);
+        }
+        else
+        {
+            if (type == "int")
+            {
+                return {std::get<int>(value), type};
+            }
+            else // float
+            {
+                return {std::get<float>(value), type};
+            }
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Unpredictible operand " + tok + " " + lex);
+    }
+}
+
+void PSM::doAssign()
+{
+    auto [lexR, tokR] = _stack.top();
+    _stack.pop();
+    auto [lexL, tokL] = _stack.top();
+    _stack.pop();
+    if (tokL != "l-val")
+    {
+        throw std::runtime_error("Left operand in assign should be l-val but " + tokL + " " + lexL + " met at line " + std::to_string(_currentInstructionIndex));
+    }
+    if (tokR == "r-val")
+    {
+        auto [_, type, value] = _tableOfId[lexR];
+        _tableOfId[lexL]._type = type;
+        _tableOfId[lexL]._value = value;
+    }
+    else if (tokR == "int")
+    {
+        _tableOfId[lexL]._type = "int";
+        _tableOfId[lexL]._value = std::stoi(lexR);
+    }
+    else if (tokR == "float")
+    {
+        _tableOfId[lexL]._type = "float";
+        _tableOfId[lexL]._value = std::stof(lexR);
+    }
+    else
+    {
+        throw std::runtime_error("Unpredictable right token in assign operation: " + tokR);
+    }
+}
+
+void PSM::doArithmetic(const std::string &lex, const std::string &tok)
+{
+    auto [lexR, tokR] = _stack.top();
+    _stack.pop();
+    auto [rValue, rType] = getValueAndType(lexR, tokR);
+    auto [lexL, tokL] = _stack.top();
+    _stack.pop();
+    auto [lValue, lType] = getValueAndType(lexL, tokL);
+    if (rType == "float" && lType == "int")
+    {
+        lType = "float";
+        lValue = static_cast<float>(std::get<int>(lValue));
+    }
+    else if (rType == "int" && lType == "float")
+    {
+        rType = "float";
+        rValue = static_cast<float>(std::get<int>(rValue));
+    }
+    auto resultType = rType;
+    if (lex == "+")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::to_string(std::get<float>(lValue) + std::get<float>(rValue)), resultType});
+        }
+        else
+        { // int
+            _stack.push({std::to_string(std::get<int>(lValue) + std::get<int>(rValue)), resultType});
+        }
+    }
+    else if (lex == "-")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::to_string(std::get<float>(lValue) - std::get<float>(rValue)), resultType});
+        }
+        else
+        { // int
+            _stack.push({std::to_string(std::get<int>(lValue) - std::get<int>(rValue)), resultType});
+        }
+    }
+    else if (lex == "*")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::to_string(std::get<float>(lValue) * std::get<float>(rValue)), resultType});
+        }
+        else
+        { // int
+            _stack.push({std::to_string(std::get<int>(lValue) * std::get<int>(rValue)), resultType});
+        }
+    }
+    else if (lex == "^")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::to_string(std::pow(std::get<float>(lValue), std::get<float>(rValue))), resultType});
+        }
+        else
+        { // int
+            _stack.push({std::to_string(std::pow(std::get<int>(lValue), std::get<int>(rValue))), resultType});
+        }
+    }
+    else if (lex == "/")
+    {
+        if (resultType == "float")
+        {
+            auto r = std::get<float>(rValue);
+            if (r == 0.0 || r == -0.0)
+            {
+                throw std::runtime_error("Ділення на 0");
+            }
+            _stack.push({std::to_string(std::get<float>(lValue) / r), "float"});
+        }
+        else
+        { // int
+            auto r = std::get<int>(rValue);
+            if (r == 0)
+            {
+                throw std::runtime_error("Ділення на 0");
+            }
+            _stack.push({std::to_string(std::get<int>(lValue) / r), "int"});
+        }
+    }
+}
+
+void PSM::doBool(const std::string &lex, const std::string &tok)
+{
+    auto [lexR, tokR] = _stack.top();
+    _stack.pop();
+    auto [rValue, rType] = getValueAndType(lexR, tokR);
+    auto [lexL, tokL] = _stack.top();
+    _stack.pop();
+    auto [lValue, lType] = getValueAndType(lexL, tokL);
+    if (rType == "float" && lType == "int")
+    {
+        lType = "float";
+        lValue = static_cast<float>(std::get<int>(lValue));
+    }
+    else if (rType == "int" && lType == "float")
+    {
+        rType = "float";
+        rValue = static_cast<float>(std::get<int>(rValue));
+    }
+    auto resultType = rType;
+    if (lex == ">")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::get<float>(lValue) > std::get<float>(rValue) ? "true" : "false", "bool"});
+        }
+        else
+        { // int
+            _stack.push({std::get<int>(lValue) > std::get<int>(rValue) ? "true" : "false", "bool"});
+        }
+    }
+    else if (lex == "<")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::get<float>(lValue) < std::get<float>(rValue) ? "true" : "false", "bool"});
+        }
+        else
+        { // int
+            _stack.push({std::get<int>(lValue) < std::get<int>(rValue) ? "true" : "false", "bool"});
+        }
+    }
+    else if (lex == ">=")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::get<float>(lValue) >= std::get<float>(rValue) ? "true" : "false", "bool"});
+        }
+        else
+        { // int
+            _stack.push({std::get<int>(lValue) >= std::get<int>(rValue) ? "true" : "false", "bool"});
+        }
+    }
+    else if (lex == "<=")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::get<float>(lValue) <= std::get<float>(rValue) ? "true" : "false", "bool"});
+        }
+        else
+        { // int
+            _stack.push({std::get<int>(lValue) <= std::get<int>(rValue) ? "true" : "false", "bool"});
+        }
+    }
+    else if (lex == "==")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::get<float>(lValue) == std::get<float>(rValue) ? "true" : "false", "bool"});
+        }
+        else
+        { // int
+            _stack.push({std::get<int>(lValue) == std::get<int>(rValue) ? "true" : "false", "bool"});
+        }
+    }
+    else if (lex == "!=")
+    {
+        if (resultType == "float")
+        {
+            _stack.push({std::get<float>(lValue) != std::get<float>(rValue) ? "true" : "false", "bool"});
+        }
+        else
+        { // int
+            _stack.push({std::get<int>(lValue) != std::get<int>(rValue) ? "true" : "false", "bool"});
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Unknown bool expression");
+    }
+}
+
 void PSM::doIt(const std::string &lex, const std::string &tok)
 {
     std::cout << "do " << lex << " " << tok << std::endl;
+    if (tok == "assign_op")
+    {
+        doAssign();
+    }
+    else if (tok == "neg")
+    {
+        doNeg();
+    }
+    else if (tok == "not_op")
+    {
+        doNot();
+    }
+    else if (arithmeticOperatorTokens.count(tok) != 0)
+    {
+        doArithmetic(lex, tok);
+    }
+    else if (boolOperatorTokens.count(tok) != 0)
+    {
+        doBool(lex, tok);
+    }
 }
 
 void PSM::postfixExec()
@@ -351,12 +705,36 @@ void PSM::postfixExec()
         }
         else if (tok == "out_op")
         {
-            std::cout << "process out" << std::endl;
+            auto [lex, tok] = _stack.top();
+            _stack.pop();
+            auto [value, type] = getValueAndType(lex, tok);
+            if (type == "int")
+            {
+                std::cout << lex << " = " << std::to_string(std::get<int>(value)) << std::endl;
+            }
+            else
+            {
+                std::cout << lex << " = " << std::to_string(std::get<float>(value)) << std::endl;
+            }
             ++_currentInstructionIndex;
         }
         else if (tok == "in_op")
         {
-            std::cout << "process in" << std::endl;
+            auto [lex, tok] = _stack.top();
+            _stack.pop();
+            std::string str;
+            std::cout << "Enter number" << std::endl;
+            std::cin >> str;
+            auto [value, type] = parseNumber(str);
+            _tableOfId[lex]._type = type;
+            if (type == "int")
+            {
+                _tableOfId[lex]._value = std::get<int>(value);
+            }
+            else
+            {
+                _tableOfId[lex]._value = std::get<float>(value);
+            }
             ++_currentInstructionIndex;
         }
         else
@@ -364,33 +742,5 @@ void PSM::postfixExec()
             doIt(lex, tok);
             ++_currentInstructionIndex;
         }
-
-        // print stack
-        // push to stack int','float','l-val','r-val','label','bool'
-        // process jumps
-        // process out
-        // process int
-        // виконати арифметичні операції
     }
-    // try:
-    //   while self.numInstr < self.maxNumbInstr:
-    //     self.stack.print()
-    //     lex,tok = self.postfixCode[self.numInstr]
-    //     if tok in ('int','float','l-val','r-val','label','bool'):
-    //       self.stack.push((lex,tok))
-    //       self.numInstr = self.numInstr +1
-    //     elif tok in ('jump','jf','colon'):
-    //       self.doJumps(lex,tok)
-    //     elif tok == 'out_op':
-    //       id, _ = self.stack.pop()
-    //       self.numInstr = self.numInstr +1
-    //       print(f'-------------- OUT: {id}={self.tableOfId[id][2]}')
-    //     else:
-    //       print(f'-=-=-=========({lex},{tok})  numInstr={self.numInstr}')
-    //       self.doIt(lex,tok)
-    //       self.numInstr = self.numInstr +1
-    //   self.stack.print()
-    // except PSMExcept as e:
-    //   # Повідомити про факт виявлення помилки
-    //   print('RunTime: Аварійне завершення програми з кодом {0}'.format(e))
 }

@@ -6,6 +6,7 @@
 #include <stack>
 #include <variant>
 #include <tuple>
+#include <utility>
 
 enum Section
 {
@@ -39,6 +40,12 @@ private:
     void printStack() const;
     void doJump(const std::string &lex, const std::string &tok);
     void doIt(const std::string &lex, const std::string &tok);
+    void doAssign();
+    void doNeg();
+    void doArithmetic(const std::string &lex, const std::string &tok);
+    void doBool(const std::string &lex, const std::string &tok);
+    void doNot();
+    std::pair<std::variant<int, float>, std::string> getValueAndType(const std::string &lex, const std::string &tok);
 
     std::vector<std::pair<std::string, std::string>> _postfixCode;
     using Value = std::variant<std::monostate, int, float>;
