@@ -13,4 +13,12 @@ a = b
 
 read(a)
 println(a)
+println(b)
+println(c)
+println(d)
+println(e)
+println(v)
+println(f)
+println(2)
+println(-1+2)
 

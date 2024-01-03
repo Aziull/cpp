@@ -10,9 +10,9 @@ int main()
         compiler.compileToPostfix(fileName);
         PSM psm;
         psm.loadPostfixFile(fileName + ".postfix");
-        psm.printState();
+        // psm.printState();
         psm.postfixExec();
-        psm.printState();
+        // psm.printState();
     }
 
     catch (const std::runtime_error &err)

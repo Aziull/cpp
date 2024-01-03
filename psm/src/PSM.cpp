@@ -82,7 +82,7 @@ std::vector<std::string> PSM::readPostfixFileContent(const std::string &fileName
         while (getline(f, line))
         {
             line = trim(line);
-            std::cout << "line \"" << line << "\"readed" << std::endl;
+            // std::cout << "line \"" << line << "\"readed" << std::endl;
             content.push_back(line);
         }
         f.close();

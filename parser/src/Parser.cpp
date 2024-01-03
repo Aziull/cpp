@@ -434,6 +434,7 @@ bool Parser::parseRead(const std::string &logMessageAlignment)
     parseToken("read", "keyword", logMessageAlignment + "\t");
     parseToken("(", "par_op", logMessageAlignment + "\t");
     auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
+    _variables[lexeme] = true;
     postfixCodeGeneration(lexeme, token, "lval");
     parseIdent(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
