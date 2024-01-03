@@ -491,6 +491,11 @@ std::vector<std::pair<std::string, std::string>> Parser::getPostfixCode() const
     return _postfixCode;
 }
 
+std::vector<std::string> Parser::getIlCode() const
+{
+    return _ilCode;
+}
+
 std::unordered_map<std::string, std::string> Parser::getLabels() const
 {
     return _labels;
@@ -509,6 +514,46 @@ void Parser::postfixCodeGeneration(const std::string &lexeme, const std::string 
     else
     {
         _postfixCode.push_back({lexeme, token});
+    }
+}
+
+void Parser::ilCodeGeneration(const std::string &lexeme, const std::string &token, const std::string &lexCase)
+{
+    if (lexCase == "lval")
+    {
+        _ilCode.push_back("ldloca " + lexeme);
+    }
+    else if (lexCase == "rval")
+    {
+        _ilCode.push_back("ldloc " + lexeme);
+    }
+    else if (token == "neg")
+    {
+        _ilCode.push_back(token);
+    }
+    else if (token == "assign_op")
+    {
+        _ilCode.push_back("setind.r4");
+    }
+    else if (lexeme == "+")
+    {
+        _ilCode.push_back("add");
+    }
+    else if (lexeme == "-")
+    {
+        _ilCode.push_back("sub");
+    }
+    else if (lexeme == "*")
+    {
+        _ilCode.push_back("mul");
+    }
+    else if (lexeme == "/")
+    {
+        _ilCode.push_back("div");
+    }
+    else
+    {
+        throw std::runtime_error("unknown instruction for il code");
     }
 }
 

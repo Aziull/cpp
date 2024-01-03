@@ -18,6 +18,7 @@ void Compiler::compileToPostfix(const std::string &fileName)
     serv(parser.getPostfixCode(), lexer.getTableOfId());
     std::cout << "compileToPostfix: Save postfix code" << std::endl;
     savePostfixCode(fileName, parser.getPostfixCode(), lexer.getTableOfConstants(), lexer.getTableOfId(), parser.getLabels());
+    saveIlCode(fileName, parser.getIlCode(), lexer.getTableOfId());
 }
 
 std::string Compiler::readSourceCode(const std::string &fileName)
@@ -79,6 +80,45 @@ void Compiler::savePostfixCode(const std::string &fileName, const std::vector<st
         throw std::runtime_error("Cannot open file to store postfix code " + fileName);
     }
     std::cout << "postfix code збережено в файлі " << fileName << ext << std::endl;
+}
+
+void Compiler::saveIlCode(const std::string &fileName, const std::vector<std::string> &ilCode, const std::unordered_map<std::string, int> &tableOfId)
+{
+    const std::string ext = ".il";
+    std::ofstream f(fileName + ext);
+    if (f)
+    {
+        f << "// Referenced Assemblies.\n";
+        f << ".assembly extern mscorlib\n";
+        f << "{\n";
+        f << "\t.publickeytoken = (B7 7A 5C 56 19 34 E0 89 )\n";
+        f << "}\n";
+        f << "// Out assembly.\n";
+        f << ".assembly test1\n";
+        f << "{\n";
+        f << "\t.hash algorithm 0x00008004\n";
+        f << "\t.ver 0:0:0:0\n";
+        f << "}\n";
+        f << ".module test1.exe\n";
+        f << "// Definition of Program class.\n";
+        f << ".class private auto ansi beforefieldinit Program\n";
+        f << "\textends [mscorlib]System.Object\n";
+        f << "{\n";
+        f << "\t.method private hidebysig static void Main(string[] args) cil managed\n";
+        f << "\t{\n";
+        f << "\t\t.locals (\n";
+        f << "\t\t)\n";
+        f << "\t\t.entrypoint\n";
+        f << "\t\tldstr \"Hello world\"\n";
+        f << "\t\tcall void [mscorlib]System.Console::Write(string)\n";
+        f << "\t}\n";
+        f << "}\n";
+    }
+    else
+    {
+        throw std::runtime_error("Cannot open file to store il code " + fileName);
+    }
+    std::cout << "il code збережено в файлі " << fileName << ext << std::endl;
 }
 
 void Compiler::serv(const std::vector<std::pair<std::string, std::string>> &postfixCode, const std::unordered_map<std::string, int> &tableOfId)

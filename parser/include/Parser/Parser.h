@@ -9,6 +9,7 @@ public:
 
     void parse();
     std::vector<std::pair<std::string, std::string>> getPostfixCode() const;
+    std::vector<std::string> getIlCode() const;
     std::unordered_map<std::string, std::string> getLabels() const;
 
 private:
@@ -34,6 +35,7 @@ private:
     void setLabel(const std::string &label);
 
     void postfixCodeGeneration(const std::string &lexeme, const std::string &token, const std::string &lexCase = "");
+    void ilCodeGeneration(const std::string &lexeme, const std::string &token, const std::string &lexCase = "");
 
 private:
     TableOfSymbols _tableOfSymbols;
@@ -42,4 +44,5 @@ private:
     std::string _error = "";
     std::vector<std::pair<std::string, std::string>> _postfixCode = {};
     std::unordered_map<std::string, std::string> _labels;
+    std::vector<std::string> _ilCode = {};
 };
