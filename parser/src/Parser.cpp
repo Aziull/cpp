@@ -256,17 +256,38 @@ bool Parser::parseFor(const std::string &logMessageAlignment)
     {
         parseDef(logMessageAlignment + "\t");
     }
+    auto m0 = createLabel();
+    setLabel(m0);
+    _postfixCode.push_back({m0, "label"});
+    _postfixCode.push_back({":", "colon"});
     parseToken(";", "split_op", logMessageAlignment + "\t");
     if (!isNextToken("split_op"))
     {
         parseBoolExpression(logMessageAlignment + "\t");
     }
+
+    auto m1 = createLabel();
+    auto m2 = createLabel();
+    auto m3 = createLabel();
+
+    _postfixCode.push_back({m1, "label"});
+    _postfixCode.push_back({"JF", "jf"});
+    _postfixCode.push_back({m2, "label"});
+    _postfixCode.push_back({"JUMP", "jump"});
     parseToken(";", "split_op", logMessageAlignment + "\t");
+    setLabel(m3);
+    _postfixCode.push_back({m3, "label"});
+    _postfixCode.push_back({":", "colon"});
     if (isNextToken("ident"))
     {
         parseIdent(logMessageAlignment + "\t");
     }
+    _postfixCode.push_back({m0, "label"});
+    _postfixCode.push_back({"JUMP", "jump"});
     parseToken(")", "par_op", logMessageAlignment + "\t");
+    setLabel(m2);
+    _postfixCode.push_back({m2, "label"});
+    _postfixCode.push_back({":", "colon"});
     parseToken("{", "cur_par_op", logMessageAlignment + "\t");
     if (isNextToken("cur_par_op", "}"))
     {
@@ -277,6 +298,12 @@ bool Parser::parseFor(const std::string &logMessageAlignment)
         parseStatementList(logMessageAlignment + "\t");
     }
     parseToken("}", "cur_par_op", logMessageAlignment + "\t");
+    _postfixCode.push_back({m3, "label"});
+    _postfixCode.push_back({"JUMP", "jump"});
+
+    setLabel(m1);
+    _postfixCode.push_back({m1, "label"});
+    _postfixCode.push_back({":", "colon"});
     return true;
 }
 

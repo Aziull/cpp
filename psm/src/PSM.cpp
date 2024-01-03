@@ -106,7 +106,7 @@ std::size_t PSM::parseHeader(const std::vector<std::string> &postfixFileContent,
 {
     if (postfixFileContent.at(currentIndex) == header)
     {
-        std::cout << "Header parsed " << header << " line: " << currentIndex << std::endl;
+        // std::cout << "Header parsed " << header << " line: " << currentIndex << std::endl;
         return ++currentIndex;
     }
     else
@@ -192,7 +192,7 @@ std::size_t PSM::parseSectionItem(const std::vector<std::string> &postfixFileCon
 
 std::size_t PSM::parseSection(const std::vector<std::string> &postfixFileContent, std::size_t currentIndex, Section section)
 {
-    std::cout << "Parse section " << sectionHeaders[section] << std::endl;
+    // std::cout << "Parse section " << sectionHeaders[section] << std::endl;
     while (true)
     {
         auto nextStr = trim(postfixFileContent.at(currentIndex));
@@ -221,7 +221,7 @@ std::size_t PSM::parseSection(const std::vector<std::string> &postfixFileContent
         }
         else if (nextStr == ")")
         {
-            std::cout << "Section " << sectionHeaders[section] << " parsed" << std::endl;
+            // std::cout << "Section " << sectionHeaders[section] << " parsed" << std::endl;
             break;
         }
         else
@@ -264,10 +264,10 @@ void PSM::loadPostfixFile(const std::string &fileName)
 
 void PSM::printState() const
 {
-    std::cout << "Table of variables" << std::endl;
+    // std::cout << "Table of variables" << std::endl;
     for (const auto &[name, data] : _tableOfId)
     {
-        std::cout << "\t" << name << ": index " << data._index << ", type " << data._type << ", value ";
+        // std::cout << "\t" << name << ": index " << data._index << ", type " << data._type << ", value ";
         if (std::holds_alternative<std::monostate>(data._value))
         {
             std::cout << "undefined";
@@ -317,17 +317,17 @@ void PSM::printStack() const
 {
     if (_stack.empty())
     {
-        std::cout << "Stack is empty" << std::endl;
+        // std::cout << "Stack is empty" << std::endl;
     }
     else
     {
-        std::cout << "Stack content \n";
+        // std::cout << "Stack content \n";
         std::stack<std::pair<std::string, std::string>> tempStack = _stack;
 
         // Iterate over the temporary stack and print its content
         while (!tempStack.empty())
         {
-            std::cout << tempStack.top().first << " " << tempStack.top().second << std::endl;
+            // std::cout << tempStack.top().first << " " << tempStack.top().second << std::endl;
             tempStack.pop();
         }
     }
@@ -336,7 +336,7 @@ void PSM::printStack() const
 void PSM::doJump(const std::string &lex, const std::string &tok)
 {
     const auto old = _currentInstructionIndex;
-    std::cout << "doJump" << std::endl;
+    // std::cout << "doJump" << std::endl;
     if (tok == "jump")
     {
         const auto &[lexLbl, _] = _stack.top();
@@ -363,7 +363,7 @@ void PSM::doJump(const std::string &lex, const std::string &tok)
             ++_currentInstructionIndex;
         }
     }
-    std::cout << "jump from " << std::to_string(old) << " to " << std::to_string(_currentInstructionIndex) << std::endl;
+    // std::cout << "jump from " << std::to_string(old) << " to " << std::to_string(_currentInstructionIndex) << std::endl;
 }
 
 void PSM::doNot()
@@ -668,7 +668,7 @@ void PSM::doBool(const std::string &lex, const std::string &tok)
 
 void PSM::doIt(const std::string &lex, const std::string &tok)
 {
-    std::cout << "do " << lex << " " << tok << std::endl;
+    // std::cout << "do " << lex << " " << tok << std::endl;
     if (tok == "assign_op")
     {
         doAssign();
@@ -696,12 +696,12 @@ void PSM::postfixExec()
     std::cout << "postfixExec:" << std::endl;
     _currentInstructionIndex = 0;
     _instructionsCount = _postfixCode.size();
-    std::cout << _currentInstructionIndex << " " << _instructionsCount << std::endl;
+    // std::cout << _currentInstructionIndex << " " << _instructionsCount << std::endl;
     while (_currentInstructionIndex < _instructionsCount)
     {
         printStack();
         const auto &[lex, tok] = _postfixCode.at(_currentInstructionIndex);
-        std::cout << lex << " " << tok << std::endl;
+        // std::cout << lex << " " << tok << std::endl;
         if (valueTokens.count(tok) != 0)
         {
             _stack.push({lex, tok});
