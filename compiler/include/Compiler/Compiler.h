@@ -10,6 +10,6 @@ public:
 
 private:
     std::string readSourceCode(const std::string &fileName);
-    void savePostfixCode(const std::string &fileName, const std::vector<std::pair<std::string, std::string>> &postfixCode);
+    void savePostfixCode(const std::string &fileName, const std::vector<std::pair<std::string, std::string>> &postfixCode, const std::unordered_map<std::string, std::pair<std::string, int>> &tableOfConstants, const std::unordered_map<std::string, int> &tableOfId);
     void serv(const std::vector<std::pair<std::string, std::string>> &postfixCode, const std::unordered_map<std::string, int> &tableOfId);
 };

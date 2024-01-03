@@ -2,14 +2,6 @@
 #include <Common/Types.h>
 #include <vector>
 
-struct PostfixCode
-{
-    std::vector<std::pair<std::string, std::string>> _code;
-    const std::unordered_map<std::string, int> _tableOfId;
-    const std::unordered_map<std::string, std::string> _tableOfLable;
-    std::unordered_map<std::string, std::pair<std::string, int>> _tableOfConsts;
-};
-
 class Parser
 {
 public:

@@ -424,7 +424,7 @@ bool Parser::parsePrintln(const std::string &logMessageAlignment)
     parseToken("(", "par_op", logMessageAlignment + "\t");
     parseExpression(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
-    postfixCodeGeneration("out", "io");
+    postfixCodeGeneration("OUT", "out_op");
     return true;
 }
 
@@ -437,7 +437,7 @@ bool Parser::parseRead(const std::string &logMessageAlignment)
     postfixCodeGeneration(lexeme, token, "lval");
     parseIdent(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
-    postfixCodeGeneration("in", "io");
+    postfixCodeGeneration("IN", "in_op");
     return true;
 }
 

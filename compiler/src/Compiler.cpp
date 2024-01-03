@@ -17,7 +17,7 @@ void Compiler::compileToPostfix(const std::string &fileName)
     std::cout << "compileToPostfix: Serve" << std::endl;
     serv(parser.getPostfixCode(), lexer.getTableOfId());
     std::cout << "compileToPostfix: Save postfix code" << std::endl;
-    savePostfixCode(fileName, parser.getPostfixCode());
+    savePostfixCode(fileName, parser.getPostfixCode(), lexer.getTableOfConstants(), lexer.getTableOfId());
 }
 
 std::string Compiler::readSourceCode(const std::string &fileName)
@@ -37,13 +37,30 @@ std::string Compiler::readSourceCode(const std::string &fileName)
     return sourceCode;
 }
 
-void Compiler::savePostfixCode(const std::string &fileName, const std::vector<std::pair<std::string, std::string>> &postfixCode)
+void Compiler::savePostfixCode(const std::string &fileName, const std::vector<std::pair<std::string, std::string>> &postfixCode, const std::unordered_map<std::string, std::pair<std::string, int>> &tableOfConstants, const std::unordered_map<std::string, int> &tableOfId)
 {
     const std::string ext = ".postfix";
     std::ofstream f(fileName + ext);
     if (f)
     {
         f << ".target: Postfix Machine\n.version: 0.2\n";
+
+        f << "\n.vars(\n";
+        for (const auto &[name, _] : tableOfId)
+        {
+            f << "\t" << name << "\tfloat\n";
+        }
+        f << ")\n";
+
+        f << "\n.labels(\n";
+        f << ")\n";
+
+        f << "\n.constants(\n";
+        for (const auto &[lex, val] : tableOfConstants)
+        {
+            f << "\t" << lex << "\t" << val.first << "\n";
+        }
+        f << ")\n";
 
         f << "\n.code(\n";
         for (const auto &line : postfixCode)
