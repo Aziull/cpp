@@ -396,7 +396,7 @@ bool Parser::parseTerm(const std::string &logMessageAlignment)
     while (_rowNumber < _tableOfSymbols.size())
     {
         const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
-        if (token == "mult_opt")
+        if (token == "mult_opt" || token == "exp_op")
         {
             ++_rowNumber;
             std::cout << logMessageAlignment << "в рядку " << lineNumber << " - " << lexeme << " " << token << std::endl;
