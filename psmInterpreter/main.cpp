@@ -14,7 +14,6 @@ int main()
         psm.postfixExec();
         // psm.printState();
     }
-
     catch (const std::runtime_error &err)
     {
         std::cout << err.what() << std::endl;

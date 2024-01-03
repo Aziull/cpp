@@ -9,6 +9,7 @@ public:
 
     void parse();
     std::vector<std::pair<std::string, std::string>> getPostfixCode() const;
+    std::unordered_map<std::string, std::string> getLabels() const;
 
 private:
     bool parseStatementList(const std::string &logMessageAlignment);
@@ -29,6 +30,8 @@ private:
     bool isNextToken(const Token &token, const Lexeme &lexeme = "");
     void printTableOfSymbols() const;
     bool parseRead(const std::string &logMessageAlignment);
+    std::string createLabel();
+    void setLabel(const std::string &label);
 
     void postfixCodeGeneration(const std::string &lexeme, const std::string &token, const std::string &lexCase = "");
 
@@ -38,4 +41,5 @@ private:
     std::size_t _rowNumber = 0;
     std::string _error = "";
     std::vector<std::pair<std::string, std::string>> _postfixCode = {};
+    std::unordered_map<std::string, std::string> _labels;
 };

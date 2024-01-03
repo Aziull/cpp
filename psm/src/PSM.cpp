@@ -37,30 +37,38 @@ namespace
     {
         try
         {
-            size_t pos = 0;
-            if (str.find_first_not_of("0123456789") == std::string::npos)
+            size_t pos;
+            if ((pos = str.find('.')) != std::string::npos)
             {
-                // Try parsing as an integer
-                return {std::stoi(str), "int"};
+                // If the string contains a '.', parse as float
+                size_t afterDecimal;
+                float floatValue = std::stof(str, &afterDecimal);
+
+                if (afterDecimal != str.length())
+                {
+                    throw std::invalid_argument("Invalid characters after decimal point");
+                }
+
+                return {floatValue, "float"};
             }
             else
             {
-                // Try parsing as a float
-                size_t floatPos = 0;
-                float floatVal = std::stof(str, &floatPos);
-                if (floatPos == str.length())
+                // Otherwise, parse as integer
+                size_t afterInteger;
+                int intValue = std::stoi(str, &afterInteger);
+
+                if (afterInteger != str.length())
                 {
-                    return {floatVal, "float"};
+                    throw std::invalid_argument("Invalid characters after integer");
                 }
+
+                return {intValue, "int"};
             }
         }
-        catch (const std::exception &)
+        catch (const std::invalid_argument &e)
         {
-            // Exception occurred, return indicating failure
-            throw std::runtime_error("Invalid input");
+            throw std::invalid_argument("Invalid input: " + str);
         }
-
-        throw std::runtime_error("Invalid input");
     }
 
     std::unordered_map<Section, std::string> sectionHeaders{{Section::Variables, ".vars("}, {Section::Labels, ".labels("}, {Section::Constants, ".constants("}, {Section::Code, ".code("}};
@@ -710,11 +718,11 @@ void PSM::postfixExec()
             auto [value, type] = getValueAndType(lex, tok);
             if (type == "int")
             {
-                std::cout << lex << " = " << std::to_string(std::get<int>(value)) << std::endl;
+                std::cout << std::to_string(std::get<int>(value)) << std::endl;
             }
             else
             {
-                std::cout << lex << " = " << std::to_string(std::get<float>(value)) << std::endl;
+                std::cout << std::to_string(std::get<float>(value)) << std::endl;
             }
             ++_currentInstructionIndex;
         }

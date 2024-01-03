@@ -176,6 +176,9 @@ bool Parser::parseIf(const std::string &logMessageAlignment)
     parseToken("(", "par_op", logMessageAlignment + "\t");
     parseBoolExpression(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
+    auto m1 = createLabel();
+    _postfixCode.push_back({m1, "label"});
+    _postfixCode.push_back({"JF", "jf"});
     parseToken("{", "cur_par_op", logMessageAlignment + "\t");
     if (isNextToken("cur_par_op", "}"))
     {
@@ -186,8 +189,22 @@ bool Parser::parseIf(const std::string &logMessageAlignment)
         parseStatementList(logMessageAlignment + "\t");
     }
     parseToken("}", "cur_par_op", logMessageAlignment + "\t");
+    auto m2 = createLabel();
+    _postfixCode.push_back({m2, "label"});
+    _postfixCode.push_back({"JF", "jump"});
+    setLabel(m1);
+    _postfixCode.push_back({m1, "label"});
+    _postfixCode.push_back({":", "colon"});
     parseElse(logMessageAlignment + "\t");
+    setLabel(m2);
+    _postfixCode.push_back({m2, "label"});
+    _postfixCode.push_back({":", "colon"});
     return true;
+}
+
+void Parser::setLabel(const std::string &label)
+{
+    _labels[label] = std::to_string(_postfixCode.size());
 }
 
 bool Parser::parseElse(const std::string &logMessageAlignment)
@@ -447,6 +464,11 @@ std::vector<std::pair<std::string, std::string>> Parser::getPostfixCode() const
     return _postfixCode;
 }
 
+std::unordered_map<std::string, std::string> Parser::getLabels() const
+{
+    return _labels;
+}
+
 void Parser::postfixCodeGeneration(const std::string &lexeme, const std::string &token, const std::string &lexCase)
 {
     if (lexCase == "lval")
@@ -461,4 +483,15 @@ void Parser::postfixCodeGeneration(const std::string &lexeme, const std::string 
     {
         _postfixCode.push_back({lexeme, token});
     }
+}
+
+std::string Parser::createLabel()
+{
+    std::string label = "m" + std::to_string(_labels.size() + 1);
+    if (_labels.count(label) != 0)
+    {
+        throw std::runtime_error("Label duplication");
+    }
+    _labels[label] = "undefined";
+    return label;
 }
