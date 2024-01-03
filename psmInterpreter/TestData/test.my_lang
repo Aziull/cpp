@@ -1,12 +1,5 @@
-def a
-read(a)
-if (a > 0){
-    println(a + 1)
-}
-println(a+2)
-a = a ^ 2 ^ a
-println(a)
 
-for(def i = 0; i < 5; i = i + 1){
-   println(i)
+for (def i = 0; i < 5; i = i + 1){
+    println(i)
 }
+println(1)

@@ -46,7 +46,7 @@ namespace
 
                 if (afterDecimal != str.length())
                 {
-                    throw std::invalid_argument("Invalid characters after decimal point");
+                    throw std::runtime_error("Invalid characters after decimal point");
                 }
 
                 return {floatValue, "float"};
@@ -59,7 +59,7 @@ namespace
 
                 if (afterInteger != str.length())
                 {
-                    throw std::invalid_argument("Invalid characters after integer");
+                    throw std::runtime_error("Invalid characters after integer");
                 }
 
                 return {intValue, "int"};
@@ -67,7 +67,7 @@ namespace
         }
         catch (const std::invalid_argument &e)
         {
-            throw std::invalid_argument("Invalid input: " + str);
+            throw std::runtime_error("Invalid input: " + str + e.what());
         }
     }
 
@@ -317,17 +317,17 @@ void PSM::printStack() const
 {
     if (_stack.empty())
     {
-        // std::cout << "Stack is empty" << std::endl;
+        std::cout << "Stack is empty" << std::endl;
     }
     else
     {
-        // std::cout << "Stack content \n";
+        std::cout << "Stack content \n";
         std::stack<std::pair<std::string, std::string>> tempStack = _stack;
 
         // Iterate over the temporary stack and print its content
         while (!tempStack.empty())
         {
-            // std::cout << tempStack.top().first << " " << tempStack.top().second << std::endl;
+            std::cout << tempStack.top().first << " " << tempStack.top().second << std::endl;
             tempStack.pop();
         }
     }
@@ -336,12 +336,13 @@ void PSM::printStack() const
 void PSM::doJump(const std::string &lex, const std::string &tok)
 {
     const auto old = _currentInstructionIndex;
-    // std::cout << "doJump" << std::endl;
+    printStack();
     if (tok == "jump")
     {
-        const auto &[lexLbl, _] = _stack.top();
+        const auto [lexLbl, _] = _stack.top();
         _stack.pop();
         _currentInstructionIndex = std::stoi(_tableOfLabels.at(lexLbl));
+         std::cout << "all" << std::endl;
     }
     else if (tok == "colon")
     {
@@ -350,9 +351,9 @@ void PSM::doJump(const std::string &lex, const std::string &tok)
     }
     else if (tok == "jf")
     {
-        const auto &[lexLbl, tokLbl] = _stack.top();
+        const auto [lexLbl, tokLbl] = _stack.top();
         _stack.pop();
-        const auto &[valBool, _] = _stack.top();
+        const auto [valBool, _] = _stack.top();
         _stack.pop();
         if (valBool == "false")
         {
@@ -696,12 +697,12 @@ void PSM::postfixExec()
     std::cout << "postfixExec:" << std::endl;
     _currentInstructionIndex = 0;
     _instructionsCount = _postfixCode.size();
-    // std::cout << _currentInstructionIndex << " " << _instructionsCount << std::endl;
+    std::cout << _currentInstructionIndex << " " << _instructionsCount << std::endl;
     while (_currentInstructionIndex < _instructionsCount)
     {
         printStack();
         const auto &[lex, tok] = _postfixCode.at(_currentInstructionIndex);
-        // std::cout << lex << " " << tok << std::endl;
+        std::cout << lex << " " << tok << std::endl;
         if (valueTokens.count(tok) != 0)
         {
             _stack.push({lex, tok});

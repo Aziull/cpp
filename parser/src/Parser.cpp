@@ -38,8 +38,8 @@ void Parser::printTableOfSymbols() const
     for (const auto &item : _tableOfSymbols)
     {
         std::cout << "Key:\t" << item.first << "\tValue:("
-                  << get<0>(item.second) << ", " << get<1>(item.second) << ", "
-                  << get<2>(item.second) << ", " << get<3>(item.second) << ")" << std::endl;
+                  << std::get<0>(item.second) << ", " << std::get<1>(item.second) << ", "
+                  << std::get<2>(item.second) << ", " << std::get<3>(item.second) << ")" << std::endl;
     }
 }
 

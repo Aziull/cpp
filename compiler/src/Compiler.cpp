@@ -79,7 +79,7 @@ void Compiler::savePostfixCode(const std::string &fileName, const std::vector<st
     {
         throw std::runtime_error("Cannot open file to store postfix code " + fileName);
     }
-    std::cout << "postfix code збережено в файлі " << fileName << ext << std::endl;
+    std::cout << "postfix code stored in file " << fileName << ext << std::endl;
 }
 
 void Compiler::saveIlCode(const std::string &fileName, const std::vector<std::string> &ilCode, const std::unordered_map<std::string, int> &tableOfId)
@@ -118,17 +118,17 @@ void Compiler::saveIlCode(const std::string &fileName, const std::vector<std::st
     {
         throw std::runtime_error("Cannot open file to store il code " + fileName);
     }
-    std::cout << "il code збережено в файлі " << fileName << ext << std::endl;
+    std::cout << "il code stored in file " << fileName << ext << std::endl;
 }
 
 void Compiler::serv(const std::vector<std::pair<std::string, std::string>> &postfixCode, const std::unordered_map<std::string, int> &tableOfId)
 {
-    std::cout << "Таблиця ідентифікаторів:" << std::endl;
+    std::cout << "Table of id:" << std::endl;
     for (const auto &[str, i] : tableOfId)
     {
         std::cout << i << " " << str << std::endl;
     }
-    std::cout << "Код програми у постфіксній формі (ПОЛІЗ):" << std::endl;
+    std::cout << "postfix code:" << std::endl;
     for (std::size_t i = 0; i < postfixCode.size(); ++i)
     {
         std::cout << i << " " << postfixCode[i].first << " " << postfixCode[i].second << std::endl;
