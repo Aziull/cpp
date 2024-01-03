@@ -1,5 +1,21 @@
+def c = 1
+println(c)
+read(c)
+println(c)
+if (c == 0){
+    println(0)
+}
+else {
+    println(c)
+}
+if (c > 1){
+    println(1)
+}
+if(c >= 2){
+    println(2)
+}
 
-for (def i = 0; i < 5; i = i + 1){
+
+for (def i = 0; i < 5; i = i +1){
     println(i)
 }
-println(1)

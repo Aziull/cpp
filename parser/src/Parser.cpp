@@ -8,25 +8,25 @@ void throwIfError(const ErrorType type, const std::string expected = "", int lin
     {
     case ErrorType::UnknownInstruction:
     {
-        throw std::runtime_error("Невідповідність інструкцій: очікувано " + expected +
-                                 ", але отримано " + lexer + " " + token + " у рядку " +
+        throw std::runtime_error("Expected: " + expected +
+                                 ", met " + lexer + " " + token + " in line " +
                                  std::to_string(lineNum));
     }
     case ErrorType::UnpredictibleFileFinish:
     {
-        throw std::runtime_error("Неочікуваний кінець програми: " + expected);
+        throw std::runtime_error("Unexpected end of file: " + expected);
     }
     case ErrorType::UndefinedVariable:
     {
-        throw std::runtime_error("Невизначений ідентифікатор " + lexer);
+        throw std::runtime_error("Undeclared identifier " + lexer);
     }
     case ErrorType::UninitializedVariable:
     {
-        throw std::runtime_error("Ідентифікатор не ініціалізовано " + lexer);
+        throw std::runtime_error("Uninitialized identifier " + lexer);
     }
     case ErrorType::IdentifierAlreadyDefined:
     {
-        throw std::runtime_error("Ідентифікатор вже визначено " + lexer);
+        throw std::runtime_error("Identifier already reclared " + lexer);
     }
     }
 }
@@ -54,7 +54,7 @@ void Parser::parse()
     }
     catch (const std::exception &ex)
     {
-        std::cout << "Синтаксичний аналіз завершився з помилкою: \n"
+        std::cout << "Syntax analysis finished with error: \n"
                   << ex.what() << std::endl;
     }
 }
@@ -121,16 +121,16 @@ bool Parser::parseToken(const Lexeme &lexeme, const Token &token, const std::str
 {
     if (_rowNumber >= _tableOfSymbols.size())
     {
-        throwIfError(ErrorType::UnpredictibleFileFinish, "Очікувався символ " + lexeme + " " + token);
+        throwIfError(ErrorType::UnpredictibleFileFinish, "Expected symbol " + lexeme + " " + token);
     }
     const auto &[lineNumber, lex, tok, _] = _tableOfSymbols.at(_rowNumber);
     ++_rowNumber;
     std::cout << logMessageAlignment
-              << "parse token: очікується " << lexeme << " " << token << std::endl;
+              << "parse token: expected " << lexeme << " " << token << std::endl;
     if (lexeme == lex && token == tok)
     {
         std::cout << logMessageAlignment
-                  << "рядок " << std::to_string(lineNumber) << ": знайдено символ " << lex << " " << tok << std::endl;
+                  << "line " << std::to_string(lineNumber) << ": symbol found " << lex << " " << tok << std::endl;
         return true;
     }
     throwIfError(ErrorType::UnknownInstruction, " token " + token + " and lexeme " + lexeme, lineNumber, lex, tok);
@@ -179,6 +179,7 @@ bool Parser::parseIf(const std::string &logMessageAlignment)
     auto m1 = createLabel();
     _postfixCode.push_back({m1, "label"});
     _postfixCode.push_back({"JF", "jf"});
+    _ilCode.push_back("brfalse " + m1);
     parseToken("{", "cur_par_op", logMessageAlignment + "\t");
     if (isNextToken("cur_par_op", "}"))
     {
@@ -191,14 +192,17 @@ bool Parser::parseIf(const std::string &logMessageAlignment)
     parseToken("}", "cur_par_op", logMessageAlignment + "\t");
     auto m2 = createLabel();
     _postfixCode.push_back({m2, "label"});
-    _postfixCode.push_back({"JF", "jump"});
+    _postfixCode.push_back({"JUMP", "jump"});
+    _ilCode.push_back("br " + m2);
     setLabel(m1);
     _postfixCode.push_back({m1, "label"});
     _postfixCode.push_back({":", "colon"});
+    _ilCode.push_back(m1+":");
     parseElse(logMessageAlignment + "\t");
     setLabel(m2);
     _postfixCode.push_back({m2, "label"});
     _postfixCode.push_back({":", "colon"});
+    _ilCode.push_back(m2+":");
     return true;
 }
 
@@ -213,7 +217,7 @@ bool Parser::parseElse(const std::string &logMessageAlignment)
               << "parse else" << std::endl;
     if (_rowNumber >= _tableOfSymbols.size())
     {
-        std::cout << logMessageAlignment << "Блок else відсутній. Кінець файлу" << std::endl;
+        std::cout << logMessageAlignment << "Block else missed. End of file" << std::endl;
         return true;
     }
 
@@ -260,6 +264,7 @@ bool Parser::parseFor(const std::string &logMessageAlignment)
     setLabel(m0);
     _postfixCode.push_back({m0, "label"});
     _postfixCode.push_back({":", "colon"});
+    _ilCode.push_back(m0+":");
     parseToken(";", "split_op", logMessageAlignment + "\t");
     if (!isNextToken("split_op"))
     {
@@ -272,22 +277,27 @@ bool Parser::parseFor(const std::string &logMessageAlignment)
 
     _postfixCode.push_back({m1, "label"});
     _postfixCode.push_back({"JF", "jf"});
+    _ilCode.push_back("brfalse "+ m1);
     _postfixCode.push_back({m2, "label"});
     _postfixCode.push_back({"JUMP", "jump"});
+    _ilCode.push_back("br " + m2);
     parseToken(";", "split_op", logMessageAlignment + "\t");
     setLabel(m3);
     _postfixCode.push_back({m3, "label"});
     _postfixCode.push_back({":", "colon"});
+    _ilCode.push_back(m3+":");
     if (isNextToken("ident"))
     {
         parseIdent(logMessageAlignment + "\t");
     }
     _postfixCode.push_back({m0, "label"});
     _postfixCode.push_back({"JUMP", "jump"});
+    _ilCode.push_back("br "+m0);
     parseToken(")", "par_op", logMessageAlignment + "\t");
     setLabel(m2);
     _postfixCode.push_back({m2, "label"});
     _postfixCode.push_back({":", "colon"});
+    _ilCode.push_back(m2+":");
     parseToken("{", "cur_par_op", logMessageAlignment + "\t");
     if (isNextToken("cur_par_op", "}"))
     {
@@ -300,10 +310,12 @@ bool Parser::parseFor(const std::string &logMessageAlignment)
     parseToken("}", "cur_par_op", logMessageAlignment + "\t");
     _postfixCode.push_back({m3, "label"});
     _postfixCode.push_back({"JUMP", "jump"});
+    _ilCode.push_back("br "+ m3);
 
     setLabel(m1);
     _postfixCode.push_back({m1, "label"});
     _postfixCode.push_back({":", "colon"});
+    _ilCode.push_back(m1+":");
     return true;
 }
 
@@ -317,7 +329,7 @@ bool Parser::parseDef(const std::string &logMessageAlignment)
         if (_variables.count(lex) == 0)
         {
             _variables[lex] = false;
-            std::cout << logMessageAlignment << "оголошено ідентифікатор " << lex << std::endl;
+            std::cout << logMessageAlignment << "identifier declared " << lex << std::endl;
         }
         else
         {
@@ -327,7 +339,7 @@ bool Parser::parseDef(const std::string &logMessageAlignment)
     }
     else
     {
-        throwIfError(ErrorType::UnknownInstruction, "ідентифікатор", lineNumber, lex, tok);
+        throwIfError(ErrorType::UnknownInstruction, "identifier", lineNumber, lex, tok);
     }
     return false;
 }
@@ -342,10 +354,11 @@ bool Parser::parseBoolExpression(const std::string &logMessageAlignment)
     }
     else
     {
-        throwIfError(ErrorType::UnknownInstruction, "оператор порівняння", lineNumber, lexeme, token);
+        throwIfError(ErrorType::UnknownInstruction, "comparison operator", lineNumber, lexeme, token);
     }
     parseExpression(logMessageAlignment + "\t");
     postfixCodeGeneration(lexeme, token);
+    ilCodeGeneration(lexeme, token);
     return true;
 }
 
@@ -356,11 +369,13 @@ bool Parser::parseAssign(const std::string &logMessageAlignment, const std::stri
     if (isNextToken("assign_op", "="))
     {
         postfixCodeGeneration(lexeme, token, "lval");
+        ilCodeGeneration(lexeme, token, "lval");
         parseToken("=", "assign_op", logMessageAlignment + "\t");
         parseExpression(logMessageAlignment + "\t");
         _variables[identifier] = true;
-        std::cout << logMessageAlignment << "ідентифікатор " << identifier << " ініціалізовано" << std::endl;
+        std::cout << logMessageAlignment << "identifier " << identifier << " initialized" << std::endl;
         postfixCodeGeneration("=", "assign_op");
+        ilCodeGeneration("=", "assign_op");
         return true;
     }
     return true;
@@ -369,7 +384,7 @@ bool Parser::parseExpression(const std::string &logMessageAlignment)
 {
     std::cout << logMessageAlignment << "Parse expression " << std::endl;
     const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
-    std::cout << logMessageAlignment << "в рядку " << std::to_string(lineNumber) << ": " << lexeme << " " << token << " " << std::to_string(id) << std::endl;
+    std::cout << logMessageAlignment << "in line " << std::to_string(lineNumber) << ": " << lexeme << " " << token << " " << std::to_string(id) << std::endl;
     parseTerm(logMessageAlignment + "\t");
     while (_rowNumber < _tableOfSymbols.size())
     {
@@ -379,6 +394,7 @@ bool Parser::parseExpression(const std::string &logMessageAlignment)
             ++_rowNumber;
             parseTerm(logMessageAlignment + "\t");
             postfixCodeGeneration(l, t);
+            ilCodeGeneration(l, t);
         }
         else
         {
@@ -399,9 +415,10 @@ bool Parser::parseTerm(const std::string &logMessageAlignment)
         if (token == "mult_opt" || token == "exp_op")
         {
             ++_rowNumber;
-            std::cout << logMessageAlignment << "в рядку " << lineNumber << " - " << lexeme << " " << token << std::endl;
+            std::cout << logMessageAlignment << "in line " << lineNumber << " - " << lexeme << " " << token << std::endl;
             parseFactor(logMessageAlignment + "\t");
             postfixCodeGeneration(lexeme, token);
+            ilCodeGeneration(lexeme, token);
         }
         else
         {
@@ -421,7 +438,7 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
         ++_rowNumber;
         tok = "neg";
         isNeg = true;
-        std::cout << logMessageAlignment << "в рядку " << lN << ": унарний мінус"
+        std::cout << logMessageAlignment << "in line " << lN << ": unary minus "
                   << " token " << tok << " lexeme " << lex << std::endl;
     }
     auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
@@ -436,14 +453,16 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
             throwIfError(ErrorType::UninitializedVariable, "", lineNumber, lexeme, token);
         }
         postfixCodeGeneration(lexeme, token, "rval");
+        ilCodeGeneration(lexeme, token, "rval");
         ++_rowNumber;
-        std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;
+        std::cout << logMessageAlignment << "вin line " << lineNumber << ": " << lexeme << " " << token << std::endl;
     }
     else if (token == "int" || token == "float")
     {
         postfixCodeGeneration(lexeme, token, "const");
+        ilCodeGeneration(lexeme, token);
         ++_rowNumber;
-        std::cout << logMessageAlignment << "в рядку " << lineNumber << ": " << lexeme << " " << token << std::endl;
+        std::cout << logMessageAlignment << "in line " << lineNumber << ": " << lexeme << " " << token << std::endl;
     }
     else if (lexeme == "(")
     {
@@ -453,11 +472,12 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
     }
     else
     {
-        throwIfError(ErrorType::UnknownInstruction, "вираз", lineNumber, lexeme, token);
+        throwIfError(ErrorType::UnknownInstruction, "expression", lineNumber, lexeme, token);
     }
     if (isNeg)
     {
         postfixCodeGeneration("-", "neg");
+        ilCodeGeneration("-", "neg");
     }
     return true;
 }
@@ -469,6 +489,7 @@ bool Parser::parsePrintln(const std::string &logMessageAlignment)
     parseExpression(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
     postfixCodeGeneration("OUT", "out_op");
+    ilCodeGeneration("OUT", "out_op");
     return true;
 }
 
@@ -480,9 +501,11 @@ bool Parser::parseRead(const std::string &logMessageAlignment)
     auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
     _variables[lexeme] = true;
     postfixCodeGeneration(lexeme, token, "lval");
+    // ilCodeGeneration(lexeme, token, "lval");
     parseIdent(logMessageAlignment + "\t");
     parseToken(")", "par_op", logMessageAlignment + "\t");
     postfixCodeGeneration("IN", "in_op");
+    ilCodeGeneration("IN", "in_op", lexeme);
     return true;
 }
 
@@ -533,7 +556,7 @@ void Parser::ilCodeGeneration(const std::string &lexeme, const std::string &toke
     }
     else if (token == "assign_op")
     {
-        _ilCode.push_back("setind.r4");
+        _ilCode.push_back("stind.r4");
     }
     else if (lexeme == "+")
     {
@@ -551,9 +574,42 @@ void Parser::ilCodeGeneration(const std::string &lexeme, const std::string &toke
     {
         _ilCode.push_back("div");
     }
+    else if(token == "out_op"){
+        _ilCode.push_back("call void [mscorlib]System.Console::WriteLine(float32)");
+    }
+    else if(token == "in_op"){
+        _ilCode.push_back("call string [mscorlib]System.Console::ReadLine()");
+        _ilCode.push_back("call float32 [mscorlib]System.Single::Parse(string)");
+        _ilCode.push_back("stloc " + lexCase);
+    }
+    else if (token == "float"){
+        _ilCode.push_back("ldc.r4 " + lexeme);}
+    else if(token == "int"){
+        
+        _ilCode.push_back("ldc.i4 " + lexeme);
+        _ilCode.push_back("conv.r4");
+    }
+    else if (lexeme == "=="){
+        _ilCode.push_back("ceq");
+    }
+    else if (lexeme == ">"){
+        _ilCode.push_back("cgt");
+    }
+    else if(lexeme == ">="){
+        _ilCode.push_back("cge");
+    }
+    else if(lexeme == "<"){
+        _ilCode.push_back("clt");
+    }
+    else if(lexeme == "<="){
+        _ilCode.push_back("cle");
+    }
+    else if (lexeme == "!="){
+        std::cout << "not implemented yet";
+    }
     else
     {
-        throw std::runtime_error("unknown instruction for il code");
+        std::cout << lexeme << token << "unknown instruction for il code" << std::endl;
     }
 }
 
