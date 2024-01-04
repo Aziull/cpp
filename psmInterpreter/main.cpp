@@ -10,7 +10,7 @@ int main()
         compiler.compileToPostfix(fileName);
         PSM psm;
         psm.loadPostfixFile(fileName + ".postfix");
-        psm.printState();
+        // psm.printState();
         psm.postfixExec();
         // psm.printState();
     }

@@ -412,11 +412,11 @@ bool Parser::parseTerm(const std::string &logMessageAlignment)
     while (_rowNumber < _tableOfSymbols.size())
     {
         const auto &[lineNumber, lexeme, token, id] = _tableOfSymbols.at(_rowNumber);
-        if (token == "mult_opt" || token == "exp_op")
+        if (token == "mult_op" || token == "exp_op")
         {
             ++_rowNumber;
             std::cout << logMessageAlignment << "in line " << lineNumber << " - " << lexeme << " " << token << std::endl;
-            parseFactor(logMessageAlignment + "\t");
+            parseTerm(logMessageAlignment + "\t");
             postfixCodeGeneration(lexeme, token);
             ilCodeGeneration(lexeme, token);
         }
@@ -455,7 +455,7 @@ bool Parser::parseFactor(const std::string &logMessageAlignment)
         postfixCodeGeneration(lexeme, token, "rval");
         ilCodeGeneration(lexeme, token, "rval");
         ++_rowNumber;
-        std::cout << logMessageAlignment << "вin line " << lineNumber << ": " << lexeme << " " << token << std::endl;
+        std::cout << logMessageAlignment << "in line " << lineNumber << ": " << lexeme << " " << token << std::endl;
     }
     else if (token == "int" || token == "float")
     {
@@ -565,6 +565,9 @@ void Parser::ilCodeGeneration(const std::string &lexeme, const std::string &toke
     else if (lexeme == "-")
     {
         _ilCode.push_back("sub");
+    }
+    else if (lexeme == "^"){
+        _ilCode.push_back("call float64 [mscorlib]System.Math::Pow(float64, float64) ");
     }
     else if (lexeme == "*")
     {

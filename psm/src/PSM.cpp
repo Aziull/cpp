@@ -315,6 +315,9 @@ void PSM::printState() const
 
 void PSM::printStack() const
 {
+    if(true){
+        return;
+    }
     if (_stack.empty())
     {
         std::cout << "Stack is empty" << std::endl;
@@ -342,7 +345,6 @@ void PSM::doJump(const std::string &lex, const std::string &tok)
         const auto [lexLbl, _] = _stack.top();
         _stack.pop();
         _currentInstructionIndex = std::stoi(_tableOfLabels.at(lexLbl));
-         std::cout << "all" << std::endl;
     }
     else if (tok == "colon")
     {
@@ -702,7 +704,7 @@ void PSM::postfixExec()
     {
         printStack();
         const auto &[lex, tok] = _postfixCode.at(_currentInstructionIndex);
-        std::cout << lex << " " << tok << std::endl;
+        // std::cout << lex << " " << tok << std::endl;
         if (valueTokens.count(tok) != 0)
         {
             _stack.push({lex, tok});

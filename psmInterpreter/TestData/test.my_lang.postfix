@@ -3,107 +3,91 @@
 
 .vars(
 	c	float
+	v	float
 	i	float
 )
 
 .labels(
-	m1	18
-	m2	22
+	m1	24
+	m2	28
 	m3	33
-	m4	35
-	m5	46
-	m6	48
-	m7	53
-	m8	77
-	m9	71
-	m10	62
+	m4	59
+	m5	51
+	m6	42
 )
 
 .constants(
 	1	int
-	0	int
+	3	int
 	2	int
+	6	int
+	7	int
+	0	int
 	5	int
 )
 
 .code(
 	c	l-val
 	1	int
+	3	int
+	2	int
+	2	int
+	^	exp_op
+	^	exp_op
+	+	add_op
+	6	int
+	7	int
+	*	mult_op
+	+	add_op
 	=	assign_op
-	c	r-val
-	OUT	out_op
-	c	l-val
+	v	l-val
 	IN	in_op
-	c	r-val
-	OUT	out_op
-	c	r-val
+	v	r-val
 	0	int
-	==	eql_op
-	m1	label
-	JF	jf
-	0	int
-	OUT	out_op
-	m2	label
-	JUMP	jump
-	m1	label
-	:	colon
-	c	r-val
-	OUT	out_op
-	m2	label
-	:	colon
-	c	r-val
-	1	int
 	>	more_op
-	m3	label
+	m1	label
 	JF	jf
-	1	int
+	v	r-val
 	OUT	out_op
-	m4	label
+	m2	label
 	JUMP	jump
-	m3	label
+	m1	label
 	:	colon
-	m4	label
-	:	colon
-	c	r-val
-	2	int
-	>=	more_than_op
-	m5	label
-	JF	jf
-	2	int
+	0	int
 	OUT	out_op
-	m6	label
-	JUMP	jump
-	m5	label
-	:	colon
-	m6	label
+	m2	label
 	:	colon
 	i	l-val
 	0	int
 	=	assign_op
-	m7	label
+	m3	label
 	:	colon
 	i	r-val
 	5	int
 	<	less_op
-	m8	label
+	m4	label
 	JF	jf
-	m9	label
+	m5	label
 	JUMP	jump
-	m10	label
+	m6	label
 	:	colon
 	i	l-val
 	i	r-val
 	1	int
 	+	add_op
 	=	assign_op
-	m7	label
+	m3	label
 	JUMP	jump
-	m9	label
+	m5	label
 	:	colon
 	i	r-val
+	v	r-val
+	+	add_op
 	OUT	out_op
-	m10	label
+	m6	label
 	JUMP	jump
-	m8	label
+	m4	label
 	:	colon
+	c	r-val
+	OUT	out_op
 )
